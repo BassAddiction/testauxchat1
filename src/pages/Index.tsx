@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import TelegramLoginButton from '@/components/TelegramLoginButton';
 
 interface Message {
   id: number;
@@ -71,15 +72,33 @@ const Index = () => {
     }
   };
 
-  const handleTelegramLogin = () => {
-    const telegramUsername = '@user' + Math.floor(Math.random() * 10000);
-    setUser({
-      username: telegramUsername,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${telegramUsername}`,
-      phone: 'Telegram',
-      energy: 100
-    });
-    setIsRegistering(false);
+  const handleTelegramAuth = async (telegramUser: any) => {
+    try {
+      const response = await fetch('https://functions.poehali.dev/1010306b-8aa0-4c54-828b-5427008a0172', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(telegramUser)
+      });
+      
+      if (response.ok) {
+        const userData = await response.json();
+        setUser({
+          username: userData.username,
+          avatar: userData.avatar,
+          phone: 'Telegram',
+          energy: userData.energy
+        });
+        setIsRegistering(false);
+      } else {
+        const error = await response.json();
+        alert('Ошибка авторизации: ' + (error.error || 'Попробуйте позже'));
+      }
+    } catch (error) {
+      console.error('Telegram auth error:', error);
+      alert('Ошибка подключения к Telegram');
+    }
   };
 
   const handleLogout = () => {
@@ -451,10 +470,16 @@ const Index = () => {
                 <p className="text-sm text-muted-foreground mb-6">
                   Авторизуйтесь через Telegram за пару секунд
                 </p>
-                <Button onClick={handleTelegramLogin} className="w-full bg-[#0088cc] hover:bg-[#0088cc]/90">
-                  <Icon name="Send" size={18} className="mr-2" />
-                  Войти через Telegram
-                </Button>
+                <TelegramLoginButton 
+                  botUsername="YOUR_BOT_USERNAME"
+                  onAuth={handleTelegramAuth}
+                />
+                <p className="text-xs text-muted-foreground mt-4">
+                  ⚠️ Замените YOUR_BOT_USERNAME на username вашего бота
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Не забудьте добавить TELEGRAM_BOT_TOKEN в секреты
+                </p>
               </div>
             </TabsContent>
           </Tabs>
