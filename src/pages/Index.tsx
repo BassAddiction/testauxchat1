@@ -302,18 +302,27 @@ const Index = () => {
                   </div>
                 </DialogContent>
               </Dialog>
-              <button
-                onClick={() => setShowProfile(true)}
-                className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-              >
-                <Avatar className="w-9 h-9 border-2 border-primary/30">
-                  <AvatarImage src={user.avatar} />
-                  <AvatarFallback>{user.username[0]}</AvatarFallback>
-                </Avatar>
-                <span className="font-medium text-foreground">
-                  {user.username}
-                </span>
-              </button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => window.location.href = "/admin"}
+                >
+                  <Icon name="Settings" size={18} />
+                </Button>
+                <button
+                  onClick={() => setShowProfile(true)}
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                >
+                  <Avatar className="w-9 h-9 border-2 border-primary/30">
+                    <AvatarImage src={user.avatar} />
+                    <AvatarFallback>{user.username[0]}</AvatarFallback>
+                  </Avatar>
+                  <span className="font-medium text-foreground">
+                    {user.username}
+                  </span>
+                </button>
+              </div>
             </div>
           ) : (
             <Button onClick={() => setIsRegistering(true)} className="gap-2">
