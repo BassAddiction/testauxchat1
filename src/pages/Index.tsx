@@ -277,7 +277,12 @@ const Index = () => {
           setMessageText("");
           loadMessages();
         } else {
-          alert("Ошибка отправки: " + (data.error || "Попробуйте позже"));
+          if (data.error === "User is banned") {
+            alert("Вы заблокированы и не можете отправлять сообщения");
+            handleLogout();
+          } else {
+            alert("Ошибка отправки: " + (data.error || "Попробуйте позже"));
+          }
         }
       } catch (error) {
         console.error("Send message error:", error);

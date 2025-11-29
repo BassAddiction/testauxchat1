@@ -46,7 +46,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     conn = psycopg2.connect(dsn)
     cur = conn.cursor()
     
-    cur.execute("SELECT energy FROM t_p53416936_auxchat_energy_messa.users WHERE id = %s", (user_id,))
+    cur.execute("SELECT energy, is_banned FROM t_p53416936_auxchat_energy_messa.users WHERE id = %s", (user_id,))
     user_data = cur.fetchone()
     
     if not user_data:
@@ -59,6 +59,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     energy = user_data[0]
+    is_banned = user_data[1] if len(user_data) > 1 and user_data[1] is not None else False
+    
+    if is_banned:
+        cur.close()
+        conn.close()
+        return {
+            'statusCode': 403,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': 'User is banned'})
+        }
     
     if energy < 10:
         cur.close()

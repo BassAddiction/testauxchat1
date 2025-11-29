@@ -71,7 +71,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'user': {
                 'id': user_id,
                 'username': username,
-                'avatar': avatar
+                'avatar': avatar if avatar else ''
             },
             'reactions': reactions
         })
