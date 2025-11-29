@@ -450,6 +450,17 @@ const Index = () => {
                   >
                     Получить код
                   </Button>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Нажимая кнопку, вы соглашаетесь с{" "}
+                    <a
+                      href="/oferta"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      публичной офертой
+                    </a>
+                  </p>
                 </>
               )}
 
