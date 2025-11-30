@@ -522,9 +522,19 @@ const Index = () => {
         const data = await response.json();
         
         if (response.ok) {
-          const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZSA0PVKzn7LBgGgU3k9jyzn0vBS19zu/dkEELElyx6OuqWBUIQ5zd8sFuJAU3jtLy0oUwBSB1wu/ekD0JE2S96+eYTQ0PWKzn7LJjHAU7ldnyz4AsBSZ8zu/dj0ALElyx6OuqWRUIRZ/e8sFuIwU5kdPz04QyBSF2wu/hlUEKE2W96+aXSw0PVqvm7bJjHAY7ltnz0IMvBSN6zu/dj0ALE16y6OyqWRUJRZ/e88FwJAU5kdPz0oYyBSF2w+/hlUEKE2W86+aWSw0PWqzm7bJjHAY7ltnz0IMvBSN6zu/djz8LEl6y6OurWhUJRJ/e88FwJAU5kdPz0oYyBSJ2w+/glUAKE2W86+aWSw0QW6vm7bNkHAc8l9n00IMvBSJ6zu/djz8LEV6x6OurWxUJRJ/e88FxJQU5kdPz0oYxBSF1wu/glEAKEmW86+aWSw0QWqvl7bNjHAc8ltn00IMvBSJ5ze/djz8LEF6x6OurWhUIRJ7d88FxJQU5kdPz0oYxBSF1wu/glEAKEWS76+aWSw0RWark7bRkHQc8ltn00IIvBSJ5ze/djj4LD16w6OurWxUIQ57e88FxJQU5kdPz0oYxBSF1wu/glEAKEWS76+aVSg0RWark7bRkHQc9l9n00IIvBSJ5ze/djj4LD16w6OurWxUIQ57d88FwJQU5jtLz0oYxBSF1wu/glUAKEWS76+aVSg0RWqrk7bRjHQc9ltn00IIvBSJ5ze/djj4LD16w6OurWxUIQ57d88FwJQU5jtLz0oYxBSF1wu/glUAKEWS76+aVSg0RWqrk7bRjHQc9ltn00IIvBSJ5ze/djj4LD16w5+urWxUIQ57d88FwJQU5jtLz0oYxBSF1wu/glUAKEWS76+aVSg0RWqrk7bRjHQc9ltn00IIvBSJ5ze/djj4LD16w5+urWxUIQ57d88FwJQU5jtLz0oYxBSF1wu/glUAKEWS76+aVSg0RWqrk7bRjHQc9ltn00IIvBSJ5ze/djj4LD16w5+urWxUIQ57d88FwJQU5jtLz0oYxBSF1wu/glUAKEWS76+aVSg0RWqrk7bRjHQc9ltn00IIvBSJ5ze/djj4LD16w5+urWxUIQ57d88FwJQU5jtLz0oYxBSF1wu/glUAKEWS76+aVSg0RWqrk7bRjHQc9ltn00IIvBSJ5ze/djj4LD16w5+urWxUIQ57d88FwJQU5jtLz0oYxBSF1wu/glUAKEWS76+aVSg0RWqrk7bRjHQc9ltn00IIvBSJ5ze/djj4LD16w5+urWxUIQ57d88FwJQU5jtLz0oYxBSF1wu/glUAKEWS76+aVSg0RWqrk7bRjHQc9ltn00IIvBSJ5ze/djj4LD16w5+urWxUIQ57d88FwJQU5jtLz0oYxBSF1wu/glUAKEWS76+aVSg0RWqrk7bRjHQc9ltn00IIvBSJ5ze/djj4LD16w5+urWxUIQ57d88FwJQU5jtLz0oYxBSF1wu/glUAKEWS76+aVSg0RWqrk7bRjHQc9ltn00IIvBSJ5ze/djj4LD16w5+urWxUIQ57d88FwJQU5jtLz0oYxBSF1wu/glUAKEWS76+aVSg0RWqrk7bRjHQc9ltn00IIvBSJ5ze/djj4LD16w5+urWxUIQ57d88FwJQU5jtLz0oYxBSF1wu/glUAKEWS76+aVSg0RWqrk7bRjHQc9ltn00IIvBSJ5ze/djj4LD16w5+urWxUIQ57d88FwJQU5jtLz0oYxBSF1wu/... [truncated]
-          audio.volume = 0.3;
-          audio.play().catch(() => {});
+          try {
+            const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1);
+          } catch (e) {}
           setMessageText("");
           loadMessages();
           if (data.energy !== undefined) {
