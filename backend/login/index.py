@@ -48,7 +48,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     cur = conn.cursor()
     
     cur.execute(
-        "SELECT id, username, avatar_url, password_hash, is_banned, is_admin FROM t_p53416936_auxchat_energy_messa.users WHERE phone = %s",
+        "SELECT id, username, avatar_url, password_hash, is_banned, is_admin, energy FROM t_p53416936_auxchat_energy_messa.users WHERE phone = %s",
         (phone,)
     )
     result = cur.fetchone()
@@ -62,7 +62,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'Invalid phone or password'})
         }
     
-    user_id, username, avatar, password_hash, is_banned, is_admin = result
+    user_id, username, avatar, password_hash, is_banned, is_admin, energy = result
     
     if not password_hash:
         cur.close()
