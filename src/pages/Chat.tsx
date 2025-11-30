@@ -120,6 +120,11 @@ export default function Chat() {
   const sendMessage = async () => {
     if (!newMessage.trim()) return;
 
+    if (String(currentUserId) === String(userId)) {
+      toast.error('Нельзя отправить сообщение самому себе');
+      return;
+    }
+
     try {
       const response = await fetch(
         'https://functions.poehali.dev/0222e582-5c06-4780-85fa-c9145e5bba14',
