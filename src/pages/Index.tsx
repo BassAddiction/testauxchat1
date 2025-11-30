@@ -394,44 +394,54 @@ const Index = () => {
 
     setUploadingFile(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const uploadResponse = await fetch('https://poehali.dev/api/upload-to-s3', {
-        method: 'POST',
-        body: formData
-      });
-
-      if (!uploadResponse.ok) {
-        alert('Ошибка загрузки фото');
-        setUploadingFile(false);
-        return;
-      }
-
-      const { url } = await uploadResponse.json();
-
-      const addPhotoResponse = await fetch(
-        'https://functions.poehali.dev/6ab5e5ca-f93c-438c-bc46-7eb7a75e2734',
-        {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64 = reader.result as string;
+        
+        const uploadResponse = await fetch('https://functions.poehali.dev/7046f3b0-52a8-4455-a8b2-c28638e5002f', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'X-User-Id': userId.toString()
           },
-          body: JSON.stringify({ photoUrl: url })
-        }
-      );
+          body: JSON.stringify({ 
+            fileData: base64,
+            fileName: file.name
+          })
+        });
 
-      if (addPhotoResponse.ok) {
-        alert('Фото добавлено');
-        loadProfilePhotos();
-      } else {
-        const error = await addPhotoResponse.json();
-        alert(error.error || 'Ошибка добавления фото');
-      }
+        if (!uploadResponse.ok) {
+          alert('Ошибка загрузки фото');
+          setUploadingFile(false);
+          return;
+        }
+
+        const { url } = await uploadResponse.json();
+
+        const addPhotoResponse = await fetch(
+          'https://functions.poehali.dev/6ab5e5ca-f93c-438c-bc46-7eb7a75e2734',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-User-Id': userId.toString()
+            },
+            body: JSON.stringify({ photoUrl: url })
+          }
+        );
+
+        if (addPhotoResponse.ok) {
+          alert('Фото добавлено');
+          loadProfilePhotos();
+        } else {
+          const error = await addPhotoResponse.json();
+          alert(error.error || 'Ошибка добавления фото');
+        }
+        setUploadingFile(false);
+      };
+      reader.readAsDataURL(file);
     } catch (error) {
       alert('Ошибка загрузки фото');
-    } finally {
       setUploadingFile(false);
     }
   };
