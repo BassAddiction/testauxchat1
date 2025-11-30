@@ -59,7 +59,10 @@ const Index = () => {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const photoFileInputRef = useRef<HTMLInputElement>(null);
-  const [displayLimit, setDisplayLimit] = useState(10);
+  const [displayLimit, setDisplayLimit] = useState(() => {
+    return window.innerWidth >= 768 ? 7 : 6;
+  });
+  const initialLimit = window.innerWidth >= 768 ? 7 : 6;
 
   const reactionEmojis = ["❤️", "👍", "🔥", "🎉", "😂", "😍"];
 
@@ -1017,15 +1020,15 @@ const Index = () => {
       <main className="flex-1 container mx-auto max-w-4xl p-4 flex flex-col overflow-hidden">
         <Card className="flex-1 flex flex-col shadow-lg">
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.length > displayLimit && (
-              <div className="text-center">
+            {displayLimit < messages.length && (
+              <div className="text-center pb-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setDisplayLimit(displayLimit + 10)}
+                  onClick={() => setDisplayLimit(displayLimit + initialLimit)}
                 >
                   <Icon name="ChevronUp" size={16} className="mr-2" />
-                  Показать ещё 10 сообщений
+                  Показать предыдущие {initialLimit}
                 </Button>
               </div>
             )}
