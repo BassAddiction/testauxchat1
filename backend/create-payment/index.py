@@ -1,7 +1,7 @@
 '''
 Business: Create YooKassa payment for energy purchase
 Args: event with httpMethod, body containing user_id and amount (50 or 100)
-Returns: HTTP response with payment confirmation URL
+Returns: HTTP response with payment confirmation URL and payment_id
 '''
 
 import json
