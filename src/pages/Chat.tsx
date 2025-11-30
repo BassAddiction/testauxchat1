@@ -131,12 +131,13 @@ export default function Chat() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-purple-950/20 to-background flex flex-col">
-      <div className="bg-card/90 backdrop-blur border-b border-purple-500/20 p-4">
-        <div className="container mx-auto max-w-4xl flex items-center gap-4">
+      <div className="bg-card/90 backdrop-blur border-b border-purple-500/20 p-3 sm:p-4 sticky top-0 z-10">
+        <div className="container mx-auto max-w-4xl flex items-center gap-2 sm:gap-4">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate('/')}
+            className="flex-shrink-0"
           >
             <Icon name="ArrowLeft" size={20} />
           </Button>
@@ -144,17 +145,17 @@ export default function Chat() {
           {profile && (
             <button
               onClick={() => navigate(`/profile/${userId}`)}
-              className="flex items-center gap-3 flex-1 hover:bg-accent/50 rounded-lg p-2 transition-colors"
+              className="flex items-center gap-2 sm:gap-3 flex-1 hover:bg-accent/50 rounded-lg p-1 sm:p-2 transition-colors min-w-0"
             >
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold flex-shrink-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold flex-shrink-0">
                 {profile.avatar ? (
                   <img src={profile.avatar} alt={profile.username} className="w-full h-full rounded-full object-cover" />
                 ) : (
                   profile.username[0]?.toUpperCase()
                 )}
               </div>
-              <div className="text-left">
-                <p className="font-semibold">{profile.username}</p>
+              <div className="text-left min-w-0 flex-1">
+                <p className="font-semibold text-sm sm:text-base truncate">{profile.username}</p>
                 <p className={`text-xs ${
                   profile.status === 'online' ? 'text-green-400' : 'text-muted-foreground'
                 }`}>
@@ -166,10 +167,17 @@ export default function Chat() {
         </div>
       </div>
 
-      <div className="flex-1 container mx-auto max-w-4xl px-4 py-6 overflow-y-auto">
+      <div className="flex-1 container mx-auto max-w-4xl px-3 sm:px-4 py-4 sm:py-6 overflow-y-auto">
         {messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-muted-foreground">Нет сообщений. Начните диалог!</p>
+          <div className="flex flex-col items-center justify-center h-full gap-4">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-2xl">
+              {profile?.avatar ? (
+                <img src={profile.avatar} alt={profile.username} className="w-full h-full rounded-full object-cover" />
+              ) : (
+                profile?.username[0]?.toUpperCase()
+              )}
+            </div>
+            <p className="text-muted-foreground text-center px-4">Нет сообщений. Начните диалог!</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -180,13 +188,22 @@ export default function Chat() {
                   key={message.id}
                   className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
                 >
-                  <div className={`max-w-[70%] ${isOwn ? 'order-2' : 'order-1'}`}>
-                    <Card className={`p-3 ${
+                  {!isOwn && (
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0 mr-2">
+                      {message.sender.avatarUrl ? (
+                        <img src={message.sender.avatarUrl} alt={message.sender.username} className="w-full h-full rounded-full object-cover" />
+                      ) : (
+                        message.sender.username[0]?.toUpperCase()
+                      )}
+                    </div>
+                  )}
+                  <div className={`max-w-[70%] sm:max-w-[60%] ${isOwn ? 'order-2' : 'order-1'}`}>
+                    <Card className={`p-2 sm:p-3 ${
                       isOwn
                         ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
                         : 'bg-card'
                     }`}>
-                      <p className="break-words">{message.text}</p>
+                      <p className="break-words text-sm sm:text-base">{message.text}</p>
                       <p className={`text-xs mt-1 ${
                         isOwn ? 'text-purple-100' : 'text-muted-foreground'
                       }`}>
@@ -205,22 +222,22 @@ export default function Chat() {
         )}
       </div>
 
-      <div className="bg-card/90 backdrop-blur border-t border-purple-500/20 p-4">
+      <div className="bg-card/90 backdrop-blur border-t border-purple-500/20 p-3 sm:p-4 sticky bottom-0">
         <div className="container mx-auto max-w-4xl flex gap-2">
           <textarea
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Написать сообщение..."
-            className="flex-1 px-4 py-3 rounded-lg bg-background border border-border resize-none"
+            className="flex-1 px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-background border border-border resize-none text-sm sm:text-base"
             rows={1}
           />
           <Button
             onClick={sendMessage}
             disabled={!newMessage.trim()}
-            className="bg-gradient-to-r from-purple-500 to-pink-500 px-6"
+            className="bg-gradient-to-r from-purple-500 to-pink-500 px-4 sm:px-6 flex-shrink-0"
           >
-            <Icon name="Send" size={20} />
+            <Icon name="Send" size={18} className="sm:w-5 sm:h-5" />
           </Button>
         </div>
       </div>
