@@ -300,25 +300,7 @@ export default function Profile() {
             </div>
 
             {isOwnProfile && photos.length < 6 && (
-              <div className="mb-4 space-y-3">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="URL фотографии"
-                    value={photoUrl}
-                    onChange={(e) => setPhotoUrl(e.target.value)}
-                    className="flex-1 px-3 py-2 rounded-lg bg-background border border-border"
-                  />
-                  <Button onClick={addPhoto} disabled={isAddingPhoto || !photoUrl.trim()}>
-                    <Icon name="Link" size={16} className="mr-2" />
-                    Добавить
-                  </Button>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 border-t border-border"></div>
-                  <span className="text-sm text-muted-foreground">или</span>
-                  <div className="flex-1 border-t border-border"></div>
-                </div>
+              <div className="mb-4">
                 <label>
                   <input
                     type="file"
@@ -330,8 +312,7 @@ export default function Profile() {
                   <Button 
                     asChild
                     disabled={uploadingFile}
-                    className="w-full"
-                    variant="outline"
+                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500"
                   >
                     <span className="cursor-pointer">
                       {uploadingFile ? (
@@ -342,7 +323,7 @@ export default function Profile() {
                       ) : (
                         <>
                           <Icon name="Upload" size={16} className="mr-2" />
-                          Загрузить с компьютера
+                          Загрузить фото
                         </>
                       )}
                     </span>
