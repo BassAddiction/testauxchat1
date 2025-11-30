@@ -69,10 +69,22 @@ const Index = () => {
   const loadMessages = async () => {
     try {
       const response = await fetch(
-        "https://functions.poehali.dev/392f3078-9f28-4640-ab86-dcabecaf721a?limit=20&offset=0"
+        "https://functions.poehali.dev/392f3078-9f28-4640-ab86-dcabecaf721a?limit=20&offset=0",
+        {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          },
+        }
       );
+      
+      if (!response.ok) {
+        console.error("Response not OK:", response.status, response.statusText);
+        return;
+      }
+      
       const data = await response.json();
-      if (response.ok && data.messages) {
+      if (data.messages) {
         const formattedMessages: Message[] = data.messages.map((msg: any) => ({
           id: msg.id,
           userId: msg.user.id,
