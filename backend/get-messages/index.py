@@ -45,7 +45,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             u.id, u.username
         FROM t_p53416936_auxchat_energy_messa.messages m
         JOIN t_p53416936_auxchat_energy_messa.users u ON m.user_id = u.id
-        ORDER BY m.created_at ASC
+        ORDER BY m.created_at DESC
         LIMIT {limit} OFFSET {offset}
     """)
     
@@ -103,6 +103,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             },
             'reactions': reactions_map.get(msg_id, [])
         })
+    
+    messages.reverse()
     
     cur.close()
     conn.close()
