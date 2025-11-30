@@ -197,6 +197,15 @@ export default function Chat() {
               </div>
             </button>
           )}
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={loadMessages}
+            className="flex-shrink-0"
+          >
+            <Icon name="RefreshCw" size={18} />
+          </Button>
         </div>
       </div>
 
