@@ -70,18 +70,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             rows = cur.fetchall()
             
-            messages = [
-                {
+            messages = []
+            for row in rows:
+                messages.append({
                     'id': row[0],
                     'senderId': row[1],
                     'receiverId': row[2],
                     'text': row[3],
                     'isRead': row[4],
-                    'createdAt': row[5].isoformat(),
+                    'createdAt': str(row[5]),
                     'sender': {'username': row[6], 'avatarUrl': row[7]}
-                }
-                for row in rows
-            ]
+                })
             
             update_query = f"""
                 UPDATE t_p53416936_auxchat_energy_messa.private_messages 
