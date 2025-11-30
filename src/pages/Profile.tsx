@@ -36,6 +36,10 @@ export default function Profile() {
   const isOwnProfile = String(currentUserId) === String(userId);
 
   useEffect(() => {
+    if (!currentUserId) {
+      navigate('/');
+      return;
+    }
     loadProfile();
     loadPhotos();
   }, [userId]);
