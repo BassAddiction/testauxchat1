@@ -638,21 +638,6 @@ const Index = () => {
                           <AvatarImage src={user.avatar} alt={user.username} />
                           <AvatarFallback>{user.username[0]}</AvatarFallback>
                         </Avatar>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="absolute bottom-0 right-0 h-6 w-6 rounded-full p-0 bg-white shadow-md"
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          <Icon name="Camera" size={14} />
-                        </Button>
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={handleAvatarChange}
-                        />
                       </div>
                       <div>
                         {isEditingUsername ? (
@@ -721,51 +706,29 @@ const Index = () => {
                       <h3 className="font-semibold mb-3">Фотографии ({profilePhotos.length}/6)</h3>
                       
                       {profilePhotos.length < 6 && (
-                        <div className="mb-4 space-y-2">
+                        <div className="mb-4 space-y-3">
+                          <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                            <p className="text-xs text-blue-800 mb-2">
+                              💡 <strong>Как добавить фото:</strong>
+                            </p>
+                            <ol className="text-xs text-blue-700 space-y-1 ml-4 list-decimal">
+                              <li>Загрузите картинку на <a href="https://imgur.com/upload" target="_blank" className="underline font-semibold">imgur.com</a> или другой хостинг</li>
+                              <li>Скопируйте прямую ссылку на картинку (заканчивается на .jpg, .png)</li>
+                              <li>Вставьте URL в поле ниже</li>
+                            </ol>
+                          </div>
                           <div className="flex gap-2">
                             <Input
                               type="text"
-                              placeholder="URL фото"
+                              placeholder="https://i.imgur.com/example.jpg"
                               value={photoUrl}
                               onChange={(e) => setPhotoUrl(e.target.value)}
                               className="flex-1"
                             />
                             <Button size="sm" onClick={addPhotoByUrl} disabled={isAddingPhoto || !photoUrl.trim()}>
-                              <Icon name="Link" size={14} />
+                              <Icon name="Plus" size={14} />
                             </Button>
                           </div>
-                          <div className="text-center text-xs text-muted-foreground">или</div>
-                          <label>
-                            <input
-                              ref={photoFileInputRef}
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={handlePhotoFileUpload}
-                              disabled={uploadingFile}
-                            />
-                            <Button 
-                              asChild
-                              variant="outline" 
-                              size="sm" 
-                              className="w-full"
-                              disabled={uploadingFile}
-                            >
-                              <span className="cursor-pointer">
-                                {uploadingFile ? (
-                                  <>
-                                    <Icon name="Loader2" size={14} className="mr-2 animate-spin" />
-                                    Загрузка...
-                                  </>
-                                ) : (
-                                  <>
-                                    <Icon name="Upload" size={14} className="mr-2" />
-                                    Загрузить фото
-                                  </>
-                                )}
-                              </span>
-                            </Button>
-                          </label>
                         </div>
                       )}
 

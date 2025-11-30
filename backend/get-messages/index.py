@@ -45,7 +45,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             u.id, u.username
         FROM t_p53416936_auxchat_energy_messa.messages m
         JOIN t_p53416936_auxchat_energy_messa.users u ON m.user_id = u.id
-        ORDER BY m.created_at DESC
+        ORDER BY m.created_at ASC
         LIMIT {limit} OFFSET {offset}
     """)
     
