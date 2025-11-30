@@ -165,11 +165,7 @@ const Index = () => {
       
       if (response.ok) {
         setSmsStep("code");
-        if (data.test_code) {
-          alert(`ТЕСТОВЫЙ РЕЖИМ: Ваш код ${data.test_code}`);
-        } else {
-          alert("SMS-код отправлен!");
-        }
+        alert("SMS-код отправлен на ваш телефон!");
       } else {
         alert(data.error || "Ошибка отправки SMS");
       }

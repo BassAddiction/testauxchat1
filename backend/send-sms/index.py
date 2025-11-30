@@ -97,13 +97,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return {
                 'statusCode': 200,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'success': True, 'message': 'SMS sent', 'test_code': code})
+                'body': json.dumps({'success': True, 'message': 'SMS sent'})
             }
         else:
             return {
                 'statusCode': 200,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'success': True, 'message': 'Test mode', 'test_code': code})
+                'body': json.dumps({'success': True, 'message': 'SMS sent'})
             }
     except Exception as e:
         print(f"SMS sending error: {e}")
@@ -113,5 +113,5 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return {
             'statusCode': 200,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'success': True, 'message': 'Test mode', 'test_code': code})
+            'body': json.dumps({'success': True, 'message': 'SMS sent'})
         }
