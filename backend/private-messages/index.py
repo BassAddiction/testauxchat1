@@ -21,8 +21,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Access-Control-Allow-Headers': 'Content-Type, X-User-Id',
                 'Access-Control-Max-Age': '86400'
             },
-            'body': '',
-            'isBase64Encoded': False
+            'body': ''
         }
     
     try:
@@ -33,8 +32,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return {
                 'statusCode': 401,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'X-User-Id header required'}),
-                'isBase64Encoded': False
+                'body': json.dumps({'error': 'X-User-Id header required'})
             }
         
         user_id = int(user_id_str)
@@ -53,8 +51,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 return {
                     'statusCode': 400,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'error': 'otherUserId query param required'}),
-                    'isBase64Encoded': False
+                    'body': json.dumps({'error': 'otherUserId query param required'})
                 }
             
             other_user_id = int(other_user_id_str)
@@ -98,8 +95,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return {
                 'statusCode': 200,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'messages': messages}),
-                'isBase64Encoded': False
+                'body': json.dumps({'messages': messages})
             }
         
         if method == 'POST':
@@ -113,8 +109,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 return {
                     'statusCode': 400,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'error': 'receiverId and text required'}),
-                    'isBase64Encoded': False
+                    'body': json.dumps({'error': 'receiverId and text required'})
                 }
             
             cur.execute("""
@@ -132,8 +127,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return {
                 'statusCode': 200,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'success': True, 'messageId': message_id}),
-                'isBase64Encoded': False
+                'body': json.dumps({'success': True, 'messageId': message_id})
             }
         
         cur.close()
@@ -141,14 +135,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return {
             'statusCode': 405,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'Method not allowed'}),
-            'isBase64Encoded': False
+            'body': json.dumps({'error': 'Method not allowed'})
         }
     except Exception as e:
         print(f'Error in private-messages: {e}')
         return {
             'statusCode': 500,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': str(e)}),
-            'isBase64Encoded': False
+            'body': json.dumps({'error': str(e)})
         }
