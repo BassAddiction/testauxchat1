@@ -50,30 +50,47 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """)
     
     rows = cur.fetchall()
-    messages = []
     
+    if not rows:
+        cur.close()
+        conn.close()
+        return {
+            'statusCode': 200,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'isBase64Encoded': False,
+            'body': json.dumps({'messages': []})
+        }
+    
+    message_ids = [row[0] for row in rows]
+    user_ids = list(set([row[3] for row in rows]))
+    
+    cur.execute(f"""
+        SELECT message_id, emoji, COUNT(*) as count
+        FROM t_p53416936_auxchat_energy_messa.message_reactions
+        WHERE message_id IN ({','.join(map(str, message_ids))})
+        GROUP BY message_id, emoji
+    """)
+    
+    reactions_map = {}
+    for r in cur.fetchall():
+        msg_id = r[0]
+        if msg_id not in reactions_map:
+            reactions_map[msg_id] = []
+        reactions_map[msg_id].append({'emoji': r[1], 'count': r[2]})
+    
+    cur.execute(f"""
+        SELECT DISTINCT ON (user_id) user_id, photo_url
+        FROM t_p53416936_auxchat_energy_messa.user_photos
+        WHERE user_id IN ({','.join(map(str, user_ids))})
+        ORDER BY user_id, display_order ASC, created_at DESC
+    """)
+    
+    avatars_map = {row[0]: row[1] for row in cur.fetchall()}
+    
+    messages = []
     for row in rows:
         msg_id, text, created_at, user_id, username = row
-        
-        cur.execute(f"""
-            SELECT emoji, COUNT(*) as count
-            FROM t_p53416936_auxchat_energy_messa.message_reactions
-            WHERE message_id = {msg_id}
-            GROUP BY emoji
-        """)
-        
-        reactions = [{'emoji': r[0], 'count': r[1]} for r in cur.fetchall()]
-        
-        cur.execute(f"""
-            SELECT photo_url
-            FROM t_p53416936_auxchat_energy_messa.user_photos
-            WHERE user_id = {user_id}
-            ORDER BY display_order ASC, created_at DESC
-            LIMIT 1
-        """)
-        
-        photo_row = cur.fetchone()
-        user_avatar = photo_row[0] if photo_row else f'https://api.dicebear.com/7.x/avataaars/svg?seed={username}'
+        user_avatar = avatars_map.get(user_id, f'https://api.dicebear.com/7.x/avataaars/svg?seed={username}')
         
         messages.append({
             'id': msg_id,
@@ -84,7 +101,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'username': username,
                 'avatar': user_avatar
             },
-            'reactions': reactions
+            'reactions': reactions_map.get(msg_id, [])
         })
     
     cur.close()
