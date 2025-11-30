@@ -1,0 +1,28 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS request for CORS",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Register new user",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "phone": "+79991234567",
+        "username": "NewUser",
+        "password": "password123",
+        "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=NewUser"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "id": "number",
+        "phone": "string",
+        "username": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
