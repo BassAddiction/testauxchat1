@@ -1,0 +1,20 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS request for CORS",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Upload image without auth",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "fileData": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+        "fileName": "test.png"
+      },
+      "expectedStatus": 401
+    }
+  ]
+}

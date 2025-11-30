@@ -180,7 +180,31 @@ export default function Profile() {
       reader.onloadend = async () => {
         const base64 = reader.result as string;
         
-        const response = await fetch(
+        const uploadResponse = await fetch(
+          'https://functions.poehali.dev/7046f3b0-52a8-4455-a8b2-c28638e5002f',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-User-Id': currentUserId || '0'
+            },
+            body: JSON.stringify({ 
+              fileData: base64,
+              fileName: file.name
+            })
+          }
+        );
+
+        if (!uploadResponse.ok) {
+          const error = await uploadResponse.json();
+          toast.error(error.error || 'Ошибка загрузки фото');
+          setUploadingFile(false);
+          return;
+        }
+
+        const { url } = await uploadResponse.json();
+
+        const addPhotoResponse = await fetch(
           'https://functions.poehali.dev/6ab5e5ca-f93c-438c-bc46-7eb7a75e2734',
           {
             method: 'POST',
@@ -188,15 +212,15 @@ export default function Profile() {
               'Content-Type': 'application/json',
               'X-User-Id': currentUserId || '0'
             },
-            body: JSON.stringify({ photoUrl: base64 })
+            body: JSON.stringify({ photoUrl: url })
           }
         );
 
-        if (response.ok) {
+        if (addPhotoResponse.ok) {
           toast.success('Фото добавлено');
           loadPhotos();
         } else {
-          const error = await response.json();
+          const error = await addPhotoResponse.json();
           toast.error(error.error || 'Ошибка добавления фото');
         }
         setUploadingFile(false);
