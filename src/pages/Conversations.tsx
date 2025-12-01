@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -19,6 +19,7 @@ export default function Conversations() {
   const navigate = useNavigate();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const prevUnreadCountRef = useRef(0);
 
   const currentUserId = localStorage.getItem('auxchat_user_id');
 
@@ -32,6 +33,29 @@ export default function Conversations() {
     return () => clearInterval(interval);
   }, []);
 
+  const playNotificationSound = () => {
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(800, audioContext.currentTime + 0.1);
+      
+      gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + 0.15);
+    } catch (e) {
+      console.log('Audio play failed:', e);
+    }
+  };
+
   const loadConversations = async () => {
     try {
       const response = await fetch(
@@ -43,7 +67,22 @@ export default function Conversations() {
         }
       );
       const data = await response.json();
-      setConversations(data.conversations || []);
+      const newConversations = data.conversations || [];
+      
+      // Считаем общее количество непрочитанных
+      const totalUnread = newConversations.reduce((sum: number, conv: Conversation) => sum + conv.unreadCount, 0);
+      
+      // Если появились новые непрочитанные
+      if (prevUnreadCountRef.current > 0 && totalUnread > prevUnreadCountRef.current) {
+        playNotificationSound();
+        const newMessages = totalUnread - prevUnreadCountRef.current;
+        toast.info('Новое личное сообщение', {
+          description: `У вас ${newMessages} ${newMessages === 1 ? 'непрочитанное сообщение' : 'непрочитанных сообщения'}`
+        });
+      }
+      
+      prevUnreadCountRef.current = totalUnread;
+      setConversations(newConversations);
     } catch (error) {
       console.error('Error loading conversations:', error);
     } finally {

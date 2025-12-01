@@ -34,6 +34,7 @@ export default function Chat() {
   const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const lastMessageCountRef = useRef(0);
 
   const currentUserId = localStorage.getItem('auxchat_user_id');
   const currentUsername = localStorage.getItem('username') || 'Я';
@@ -98,6 +99,29 @@ export default function Chat() {
     }
   };
 
+  const playNotificationSound = () => {
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(800, audioContext.currentTime + 0.1);
+      
+      gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + 0.15);
+    } catch (e) {
+      console.log('Audio play failed:', e);
+    }
+  };
+
   const loadMessages = async () => {
     try {
       const response = await fetch(
@@ -109,7 +133,22 @@ export default function Chat() {
         }
       );
       const data = await response.json();
-      setMessages(data.messages || []);
+      const newMessages = data.messages || [];
+      
+      // Проверяем новые входящие сообщения
+      if (lastMessageCountRef.current > 0 && newMessages.length > lastMessageCountRef.current) {
+        const latestMessage = newMessages[newMessages.length - 1];
+        // Если последнее сообщение от собеседника (не от нас)
+        if (String(latestMessage.senderId) !== String(currentUserId)) {
+          playNotificationSound();
+          toast.info(`${profile?.username || 'Новое'} сообщение`, {
+            description: latestMessage.text.slice(0, 50) + (latestMessage.text.length > 50 ? '...' : '')
+          });
+        }
+      }
+      
+      lastMessageCountRef.current = newMessages.length;
+      setMessages(newMessages);
     } catch (error) {
       console.error('Error loading messages:', error);
     } finally {
