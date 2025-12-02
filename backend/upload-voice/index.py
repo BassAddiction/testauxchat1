@@ -36,9 +36,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     try:
+        print('=== STEP 1: Parsing body ===')
         body_data = json.loads(event.get('body', '{}'))
         audio_base64 = body_data.get('audioData', '')
         file_extension = body_data.get('extension', 'webm')
+        print(f'Body parsed, extension: {file_extension}')
         
         if not audio_base64:
             return {
@@ -48,7 +50,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'isBase64Encoded': False
             }
         
+        print('=== STEP 2: Decoding audio ===')
         audio_bytes = base64.b64decode(audio_base64)
+        print(f'Audio decoded, size: {len(audio_bytes)} bytes')
         
         if len(audio_bytes) < 100:
             return {
@@ -58,11 +62,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'isBase64Encoded': False
             }
         
+        print('=== STEP 3: Loading S3 credentials ===')
         s3_access_key = os.environ.get('TIMEWEB_S3_ACCESS_KEY')
         s3_secret_key = os.environ.get('TIMEWEB_S3_SECRET_KEY')
         s3_bucket = os.environ.get('TIMEWEB_S3_BUCKET_NAME')
         s3_endpoint = os.environ.get('TIMEWEB_S3_ENDPOINT', 'https://s3.twcstorage.ru')
         s3_region = os.environ.get('TIMEWEB_S3_REGION', 'ru-1')
+        print(f'S3 config: endpoint={s3_endpoint}, bucket={s3_bucket}, region={s3_region}')
+        print(f'Credentials present: access_key={bool(s3_access_key)}, secret_key={bool(s3_secret_key)}')
         
         if not all([s3_access_key, s3_secret_key, s3_bucket]):
             return {
@@ -72,6 +79,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'isBase64Encoded': False
             }
         
+        print('=== STEP 4: Creating S3 client ===')
         from botocore.config import Config
         
         s3_client = boto3.client(
@@ -87,11 +95,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 read_timeout=10
             )
         )
+        print('S3 client created successfully')
         
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         filename = f'voice-messages/voice_{timestamp}.{file_extension}'
-        
         content_type = 'audio/webm' if file_extension == 'webm' else 'audio/mp4'
+        print(f'=== STEP 5: Uploading to S3: {filename} ===')
         
         s3_client.put_object(
             Bucket=s3_bucket,
@@ -100,8 +109,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             ContentType=content_type,
             ACL='public-read'
         )
+        print('Upload successful!')
         
         file_url = f'{s3_endpoint}/{s3_bucket}/{filename}'
+        print(f'File URL: {file_url}')
         
         return {
             'statusCode': 200,
@@ -111,7 +122,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
         
     except Exception as e:
-        print(f'Upload error: {e}')
+        print(f'=== ERROR: {type(e).__name__}: {e} ===')
+        import traceback
+        print(f'Traceback: {traceback.format_exc()}')
         return {
             'statusCode': 500,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
