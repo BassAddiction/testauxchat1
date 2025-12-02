@@ -276,14 +276,27 @@ export default function Chat() {
                         : 'bg-card'
                     }`}>
                       <p className="break-words text-xs md:text-sm leading-relaxed">{message.text}</p>
-                      <p className={`text-[10px] md:text-xs mt-0.5 md:mt-1 ${
+                      <div className={`flex items-center justify-between gap-2 text-[10px] md:text-xs mt-0.5 md:mt-1 ${
                         isOwn ? 'text-purple-100' : 'text-muted-foreground'
                       }`}>
-                        {new Date(message.createdAt).toLocaleTimeString('ru-RU', {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </p>
+                        <span>
+                          {new Date(message.createdAt).toLocaleTimeString('ru-RU', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </span>
+                        {isOwn && (
+                          <span className="flex items-center gap-0.5">
+                            {message.isRead ? (
+                              <>
+                                <Icon name="CheckCheck" size={12} className="text-blue-200" />
+                              </>
+                            ) : (
+                              <Icon name="Check" size={12} className="text-purple-200" />
+                            )}
+                          </span>
+                        )}
+                      </div>
                     </Card>
                   </div>
                 </div>
