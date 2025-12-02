@@ -1067,14 +1067,27 @@ const Index = () => {
                       )}
                     </div>
 
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={handleLogout}
-                    >
-                      <Icon name="LogOut" size={16} className="mr-2" />
-                      Выйти
-                    </Button>
+                    <div className="space-y-2">
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => {
+                          setShowProfile(false);
+                          navigate('/blacklist');
+                        }}
+                      >
+                        <Icon name="Ban" size={16} className="mr-2" />
+                        Черный список
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={handleLogout}
+                      >
+                        <Icon name="LogOut" size={16} className="mr-2" />
+                        Выйти
+                      </Button>
+                    </div>
                   </div>
                 </DialogContent>
               </Dialog>

@@ -31,6 +31,8 @@ export default function Profile() {
   const [uploadingFile, setUploadingFile] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [checkingBlock, setCheckingBlock] = useState(false);
 
   const currentUserId = localStorage.getItem('auxchat_user_id');
   const isOwnProfile = String(currentUserId) === String(userId);
@@ -42,6 +44,9 @@ export default function Profile() {
     }
     loadProfile();
     loadPhotos();
+    if (!isOwnProfile) {
+      checkBlockStatus();
+    }
   }, [userId]);
 
   const loadProfile = async () => {
@@ -142,6 +147,61 @@ export default function Profile() {
 
   const openChat = () => {
     navigate(`/chat/${userId}`);
+  };
+
+  const checkBlockStatus = async () => {
+    try {
+      const response = await fetch(
+        'https://functions.poehali.dev/7d7db6d4-88e3-4f83-8ad5-9fc30ccfd5bf',
+        {
+          headers: { 'X-User-Id': currentUserId || '0' }
+        }
+      );
+      const data = await response.json();
+      const blocked = data.blockedUsers?.some((u: any) => String(u.userId) === String(userId));
+      setIsBlocked(blocked);
+    } catch (error) {
+      console.error('Error checking block status:', error);
+    }
+  };
+
+  const handleBlockToggle = async () => {
+    setCheckingBlock(true);
+    try {
+      if (isBlocked) {
+        const response = await fetch(
+          `https://functions.poehali.dev/7d7db6d4-88e3-4f83-8ad5-9fc30ccfd5bf?blockedUserId=${userId}`,
+          {
+            method: 'DELETE',
+            headers: { 'X-User-Id': currentUserId || '0' }
+          }
+        );
+        if (response.ok) {
+          setIsBlocked(false);
+          toast.success('Пользователь разблокирован');
+        }
+      } else {
+        const response = await fetch(
+          'https://functions.poehali.dev/7d7db6d4-88e3-4f83-8ad5-9fc30ccfd5bf',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-User-Id': currentUserId || '0'
+            },
+            body: JSON.stringify({ blockedUserId: Number(userId) })
+          }
+        );
+        if (response.ok) {
+          setIsBlocked(true);
+          toast.success('Пользователь заблокирован');
+        }
+      }
+    } catch (error) {
+      toast.error('Ошибка при изменении статуса блокировки');
+    } finally {
+      setCheckingBlock(false);
+    }
   };
 
   const openPhotoViewer = (index: number) => {
@@ -289,10 +349,27 @@ export default function Profile() {
               )}
 
               {!isOwnProfile && (
-                <Button onClick={openChat} className="bg-gradient-to-r from-purple-500 to-pink-500 h-8 md:h-9 text-xs md:text-sm w-full md:w-auto">
-                  <Icon name="MessageCircle" size={14} className="mr-1.5" />
-                  Написать
-                </Button>
+                <div className="flex flex-col md:flex-row gap-2">
+                  <Button onClick={openChat} className="bg-gradient-to-r from-purple-500 to-pink-500 h-8 md:h-9 text-xs md:text-sm flex-1">
+                    <Icon name="MessageCircle" size={14} className="mr-1.5" />
+                    Написать
+                  </Button>
+                  <Button 
+                    onClick={handleBlockToggle}
+                    disabled={checkingBlock}
+                    variant={isBlocked ? "outline" : "destructive"}
+                    className="h-8 md:h-9 text-xs md:text-sm"
+                  >
+                    {checkingBlock ? (
+                      <Icon name="Loader2" size={14} className="animate-spin" />
+                    ) : (
+                      <>
+                        <Icon name={isBlocked ? "UserCheck" : "UserX"} size={14} className="mr-1.5" />
+                        {isBlocked ? "Разблокировать" : "Заблокировать"}
+                      </>
+                    )}
+                  </Button>
+                </div>
               )}
             </div>
           </div>

@@ -12,6 +12,7 @@ import Chat from "./pages/Chat";
 import Conversations from "./pages/Conversations";
 import Subscriptions from "./pages/Subscriptions";
 import UserMessages from "./pages/UserMessages";
+import Blacklist from "./pages/Blacklist";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/messages" element={<Conversations />} />
           <Route path="/subscriptions" element={<Subscriptions />} />
           <Route path="/user-messages/:userId" element={<UserMessages />} />
+          <Route path="/blacklist" element={<Blacklist />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

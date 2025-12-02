@@ -1,0 +1,30 @@
+{
+  "tests": [
+    {
+      "name": "Get blacklist - empty",
+      "method": "GET",
+      "headers": {
+        "X-User-Id": "7"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "blockedUsers": []
+      }
+    },
+    {
+      "name": "Block user",
+      "method": "POST",
+      "headers": {
+        "X-User-Id": "7"
+      },
+      "body": {
+        "blockedUserId": 8
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
