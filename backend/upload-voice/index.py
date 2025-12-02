@@ -1,14 +1,13 @@
 '''
-Business: Upload voice message to Timeweb S3 and return URL
-Args: event with httpMethod, body (base64 encoded audio), headers
-Returns: HTTP response with S3 URL
+Business: Upload voice message to ImgBB temporary storage and return URL
+Args: event with httpMethod, body (base64 encoded audio), headers  
+Returns: HTTP response with file URL
 '''
 
 import json
 import os
 import base64
-import boto3
-from botocore.config import Config
+import requests
 from typing import Dict, Any
 from datetime import datetime
 
@@ -63,57 +62,45 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'isBase64Encoded': False
             }
         
-        print('=== STEP 3: Loading Timeweb S3 credentials ===')
-        s3_access_key = os.environ.get('TIMEWEB_S3_ACCESS_KEY')
-        s3_secret_key = os.environ.get('TIMEWEB_S3_SECRET_KEY')
-        s3_bucket = os.environ.get('TIMEWEB_S3_BUCKET_NAME')
-        s3_endpoint = os.environ.get('TIMEWEB_S3_ENDPOINT', 'https://s3.twcstorage.ru')
-        s3_region = os.environ.get('TIMEWEB_S3_REGION', 'ru-1')
+        print('=== STEP 3: Loading ImgBB API key ===')
+        imgbb_api_key = os.environ.get('IMGBB_API_KEY')
         
-        if not all([s3_access_key, s3_secret_key, s3_bucket]):
+        if not imgbb_api_key:
             return {
                 'statusCode': 500,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'Timeweb S3 credentials not configured'}),
+                'body': json.dumps({'error': 'IMGBB_API_KEY not configured'}),
                 'isBase64Encoded': False
             }
         
-        print(f'S3 config: endpoint={s3_endpoint}, bucket={s3_bucket}, region={s3_region}')
+        print('ImgBB API key loaded')
         
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f'voice-messages/voice_{timestamp}.{file_extension}'
-        content_type = 'audio/webm' if file_extension == 'webm' else 'audio/mp4'
-        
-        print(f'=== STEP 4: Creating boto3 S3 client for Timeweb ===')
+        print('=== STEP 4: Uploading to ImgBB ===')
         
         try:
-            s3_client = boto3.client(
-                's3',
-                endpoint_url=s3_endpoint,
-                aws_access_key_id=s3_access_key,
-                aws_secret_access_key=s3_secret_key,
-                region_name=s3_region,
-                config=Config(
-                    signature_version='s3v4',
-                    s3={'addressing_style': 'path'},
-                    connect_timeout=3,
-                    read_timeout=5,
-                    retries={'max_attempts': 1}
-                )
-            )
-            print('S3 client created')
-            
-            print(f'=== STEP 5: Uploading to S3: {filename} ===')
-            
-            s3_client.put_object(
-                Bucket=s3_bucket,
-                Key=filename,
-                Body=audio_bytes,
-                ContentType=content_type,
-                ACL='public-read'
+            response = requests.post(
+                'https://api.imgbb.com/1/upload',
+                data={
+                    'key': imgbb_api_key,
+                    'image': audio_base64,
+                    'name': f'voice_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
+                },
+                timeout=10
             )
             
-            file_url = f'{s3_endpoint}/{s3_bucket}/{filename}'
+            print(f'Upload response status: {response.status_code}')
+            
+            if response.status_code != 200:
+                print(f'Upload failed: {response.text}')
+                return {
+                    'statusCode': 500,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'error': f'ImgBB upload failed: {response.status_code}'}),
+                    'isBase64Encoded': False
+                }
+            
+            result = response.json()
+            file_url = result['data']['url']
             print(f'Upload successful! URL: {file_url}')
             
         except Exception as upload_error:
