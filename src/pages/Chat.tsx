@@ -49,9 +49,10 @@ export default function Chat() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const audioStreamRef = useRef<MediaStream | null>(null);
 
   const currentUserId = localStorage.getItem('auxchat_user_id');
   const currentUsername = localStorage.getItem('username') || 'Я';
@@ -252,38 +253,48 @@ export default function Chat() {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      const chunks: Blob[] = [];
+      audioStreamRef.current = stream;
+      audioChunksRef.current = [];
+      
+      const recorder = new MediaRecorder(stream, {
+        mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4'
+      });
 
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
-          chunks.push(e.data);
+          audioChunksRef.current.push(e.data);
         }
       };
 
-      recorder.onstop = async () => {
-        const audioBlob = new Blob(chunks, { type: 'audio/webm' });
-        await uploadVoiceMessage(audioBlob);
-        stream.getTracks().forEach(track => track.stop());
-      };
-
       recorder.start();
-      setMediaRecorder(recorder);
+      mediaRecorderRef.current = recorder;
       setIsRecording(true);
       setRecordingTime(0);
-      setAudioChunks(chunks);
 
       recordingIntervalRef.current = setInterval(() => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
     } catch (error) {
+      console.error('Recording error:', error);
       toast.error('Нет доступа к микрофону');
     }
   };
 
   const stopRecording = () => {
-    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-      mediaRecorder.stop();
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state !== 'inactive') {
+      recorder.onstop = async () => {
+        const mimeType = recorder.mimeType;
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+        await uploadVoiceMessage(audioBlob);
+        
+        if (audioStreamRef.current) {
+          audioStreamRef.current.getTracks().forEach(track => track.stop());
+          audioStreamRef.current = null;
+        }
+      };
+      
+      recorder.stop();
       setIsRecording(false);
       if (recordingIntervalRef.current) {
         clearInterval(recordingIntervalRef.current);
@@ -293,23 +304,35 @@ export default function Chat() {
   };
 
   const cancelRecording = () => {
-    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-      mediaRecorder.stop();
-      mediaRecorder.stream.getTracks().forEach(track => track.stop());
-      setIsRecording(false);
-      setRecordingTime(0);
-      setAudioChunks([]);
-      if (recordingIntervalRef.current) {
-        clearInterval(recordingIntervalRef.current);
-        recordingIntervalRef.current = null;
-      }
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state !== 'inactive') {
+      recorder.onstop = null;
+      recorder.stop();
+    }
+    
+    if (audioStreamRef.current) {
+      audioStreamRef.current.getTracks().forEach(track => track.stop());
+      audioStreamRef.current = null;
+    }
+    
+    audioChunksRef.current = [];
+    setIsRecording(false);
+    setRecordingTime(0);
+    
+    if (recordingIntervalRef.current) {
+      clearInterval(recordingIntervalRef.current);
+      recordingIntervalRef.current = null;
     }
   };
 
   const uploadVoiceMessage = async (audioBlob: Blob) => {
+    const duration = recordingTime;
+    setRecordingTime(0);
+    
     try {
+      const extension = audioBlob.type.includes('webm') ? 'webm' : 'mp4';
       const formData = new FormData();
-      formData.append('file', audioBlob, `voice-${Date.now()}.webm`);
+      formData.append('file', audioBlob, `voice-${Date.now()}.${extension}`);
 
       const uploadResponse = await fetch('https://poehali.dev/api/upload-to-s3', {
         method: 'POST',
@@ -322,9 +345,9 @@ export default function Chat() {
       }
 
       const { url } = await uploadResponse.json();
-      await sendMessage(url, recordingTime);
-      setRecordingTime(0);
+      await sendMessage(url, duration);
     } catch (error) {
+      console.error('Upload voice error:', error);
       toast.error('Ошибка отправки голосового сообщения');
     }
   };
@@ -502,13 +525,24 @@ export default function Chat() {
                         : 'bg-card'
                     }`}>
                       {message.voiceUrl ? (
-                        <div className="flex items-center gap-2">
-                          <audio controls className="max-w-full">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Icon name="Mic" size={16} className={isOwn ? "text-purple-100" : "text-purple-500"} />
+                            <span className="text-xs">Голосовое сообщение</span>
+                            {message.voiceDuration && (
+                              <span className="text-xs opacity-70">({formatTime(message.voiceDuration)})</span>
+                            )}
+                          </div>
+                          <audio 
+                            controls 
+                            className="w-full max-w-xs h-8"
+                            style={{
+                              filter: isOwn ? 'invert(1) brightness(1.5)' : 'none'
+                            }}
+                          >
                             <source src={message.voiceUrl} type="audio/webm" />
+                            <source src={message.voiceUrl} type="audio/mp4" />
                           </audio>
-                          {message.voiceDuration && (
-                            <span className="text-xs whitespace-nowrap">{formatTime(message.voiceDuration)}</span>
-                          )}
                         </div>
                       ) : (
                         <p className="break-words text-xs md:text-sm leading-relaxed">{message.text}</p>
@@ -547,54 +581,57 @@ export default function Chat() {
       <div className="bg-card/90 backdrop-blur border-t border-purple-500/20 p-2 md:p-4">
         <div className="container mx-auto max-w-4xl">
           {isRecording ? (
-            <div className="flex items-center gap-3 bg-red-50 dark:bg-red-950/20 p-3 rounded-2xl">
+            <div className="flex items-center gap-3 bg-red-50 dark:bg-red-950/20 p-3 rounded-2xl border-2 border-red-200">
               <div className="flex items-center gap-2 flex-1">
                 <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
-                <span className="text-sm font-medium">{formatTime(recordingTime)}</span>
+                <span className="text-sm font-medium text-red-600">Запись... {formatTime(recordingTime)}</span>
               </div>
               <Button
                 onClick={cancelRecording}
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9"
+                className="h-9 w-9 hover:bg-red-100"
               >
-                <Icon name="X" size={20} />
+                <Icon name="X" size={20} className="text-red-600" />
               </Button>
               <Button
                 onClick={stopRecording}
-                className="h-9 w-9 p-0 rounded-full bg-gradient-to-r from-purple-500 to-pink-500"
+                className="h-9 px-4 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
               >
-                <Icon name="Send" size={16} className="ml-0.5" />
+                <Icon name="Send" size={16} className="mr-2" />
+                Отправить
               </Button>
             </div>
           ) : (
-            <div className="relative flex items-end gap-2">
-              {!newMessage.trim() && (
-                <Button
-                  onClick={startRecording}
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 flex-shrink-0"
-                >
-                  <Icon name="Mic" size={20} />
-                </Button>
-              )}
+            <div className="relative flex items-end">
               <textarea
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Написать сообщение..."
-                className="flex-1 pl-3 md:pl-4 pr-12 md:pr-14 py-2.5 md:py-3 rounded-3xl border-2 border-gray-200 bg-gray-50 resize-none focus:outline-none focus:border-purple-400 focus:bg-white text-sm md:text-base transition-all"
+                className="flex-1 pl-3 md:pl-4 pr-20 md:pr-24 py-2.5 md:py-3 rounded-3xl border-2 border-gray-200 bg-gray-50 resize-none focus:outline-none focus:border-purple-400 focus:bg-white text-sm md:text-base transition-all"
                 rows={1}
                 style={{ minHeight: '44px', maxHeight: '120px' }}
               />
-              <Button
-                onClick={() => sendMessage()}
-                disabled={!newMessage.trim()}
-                className="absolute right-1 md:right-1.5 bottom-1 md:bottom-1.5 h-8 w-8 md:h-9 md:w-9 p-0 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:opacity-40 disabled:cursor-not-allowed shadow-md"
-              >
-                <Icon name="Send" size={16} className="ml-0.5" />
-              </Button>
+              <div className="absolute right-1 md:right-1.5 bottom-1 md:bottom-1.5 flex items-center gap-1">
+                {!newMessage.trim() && (
+                  <Button
+                    onClick={startRecording}
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 md:h-9 md:w-9 p-0 rounded-full hover:bg-purple-100"
+                  >
+                    <Icon name="Mic" size={18} className="text-purple-600" />
+                  </Button>
+                )}
+                <Button
+                  onClick={() => sendMessage()}
+                  disabled={!newMessage.trim()}
+                  className="h-8 w-8 md:h-9 md:w-9 p-0 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:opacity-40 disabled:cursor-not-allowed shadow-md"
+                >
+                  <Icon name="Send" size={16} className="ml-0.5" />
+                </Button>
+              </div>
             </div>
           )}
         </div>
