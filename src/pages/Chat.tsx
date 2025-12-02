@@ -4,6 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 interface Message {
   id: number;
@@ -37,6 +44,7 @@ export default function Chat() {
   const lastMessageCountRef = useRef(0);
   const [isBlocked, setIsBlocked] = useState(false);
   const [checkingBlock, setCheckingBlock] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const currentUserId = localStorage.getItem('auxchat_user_id');
   const currentUsername = localStorage.getItem('username') || 'Я';
@@ -310,20 +318,40 @@ export default function Chat() {
                   </p>
                 </div>
               </button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleBlockToggle}
-                disabled={checkingBlock}
-                className="flex-shrink-0 h-9 w-9"
-                title={isBlocked ? "Разблокировать" : "Заблокировать"}
-              >
-                {checkingBlock ? (
-                  <Icon name="Loader2" size={18} className="animate-spin" />
-                ) : (
-                  <Icon name={isBlocked ? "UserCheck" : "Ban"} size={18} className={isBlocked ? "text-green-500" : "text-red-500"} />
-                )}
-              </Button>
+              <Dialog open={menuOpen} onOpenChange={setMenuOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="flex-shrink-0 h-9 w-9"
+                  >
+                    <Icon name="MoreVertical" size={18} />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-xs">
+                  <DialogHeader>
+                    <DialogTitle>Действия</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-2">
+                    <Button
+                      variant={isBlocked ? "outline" : "destructive"}
+                      className="w-full justify-start"
+                      onClick={() => {
+                        handleBlockToggle();
+                        setMenuOpen(false);
+                      }}
+                      disabled={checkingBlock}
+                    >
+                      {checkingBlock ? (
+                        <Icon name="Loader2" size={16} className="mr-2 animate-spin" />
+                      ) : (
+                        <Icon name={isBlocked ? "UserCheck" : "Ban"} size={16} className="mr-2" />
+                      )}
+                      {isBlocked ? 'Разблокировать пользователя' : 'Заблокировать пользователя'}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </>
           )}
         </div>
