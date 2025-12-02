@@ -35,6 +35,8 @@ export default function Chat() {
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastMessageCountRef = useRef(0);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [checkingBlock, setCheckingBlock] = useState(false);
 
   const currentUserId = localStorage.getItem('auxchat_user_id');
   const currentUsername = localStorage.getItem('username') || 'Я';
@@ -43,6 +45,7 @@ export default function Chat() {
     loadProfile();
     loadCurrentUserProfile();
     loadMessages();
+    checkBlockStatus();
     const messagesInterval = setInterval(loadMessages, 3000);
     const profileInterval = setInterval(loadProfile, 10000);
     return () => {
@@ -200,6 +203,61 @@ export default function Chat() {
     }
   };
 
+  const checkBlockStatus = async () => {
+    try {
+      const response = await fetch(
+        'https://functions.poehali.dev/7d7db6d4-88e3-4f83-8ad5-9fc30ccfd5bf',
+        {
+          headers: { 'X-User-Id': currentUserId || '0' }
+        }
+      );
+      const data = await response.json();
+      const blocked = data.blockedUsers?.some((u: any) => String(u.userId) === String(userId));
+      setIsBlocked(blocked);
+    } catch (error) {
+      console.error('Error checking block status:', error);
+    }
+  };
+
+  const handleBlockToggle = async () => {
+    setCheckingBlock(true);
+    try {
+      if (isBlocked) {
+        const response = await fetch(
+          `https://functions.poehali.dev/7d7db6d4-88e3-4f83-8ad5-9fc30ccfd5bf?blockedUserId=${userId}`,
+          {
+            method: 'DELETE',
+            headers: { 'X-User-Id': currentUserId || '0' }
+          }
+        );
+        if (response.ok) {
+          setIsBlocked(false);
+          toast.success('Пользователь разблокирован');
+        }
+      } else {
+        const response = await fetch(
+          'https://functions.poehali.dev/7d7db6d4-88e3-4f83-8ad5-9fc30ccfd5bf',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-User-Id': currentUserId || '0'
+            },
+            body: JSON.stringify({ blockedUserId: Number(userId) })
+          }
+        );
+        if (response.ok) {
+          setIsBlocked(true);
+          toast.success('Пользователь заблокирован');
+        }
+      }
+    } catch (error) {
+      toast.error('Ошибка при изменении статуса блокировки');
+    } finally {
+      setCheckingBlock(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -224,26 +282,42 @@ export default function Chat() {
           </Button>
 
           {profile && (
-            <button
-              onClick={() => navigate(`/profile/${userId}`)}
-              className="flex items-center gap-2 sm:gap-3 flex-1 hover:bg-accent/50 rounded-lg p-1 sm:p-2 transition-colors min-w-0"
-            >
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold flex-shrink-0">
-                {profile.avatar ? (
-                  <img src={profile.avatar} alt={profile.username} className="w-full h-full rounded-full object-cover" />
+            <>
+              <button
+                onClick={() => navigate(`/profile/${userId}`)}
+                className="flex items-center gap-2 sm:gap-3 flex-1 hover:bg-accent/50 rounded-lg p-1 sm:p-2 transition-colors min-w-0"
+              >
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold flex-shrink-0">
+                  {profile.avatar ? (
+                    <img src={profile.avatar} alt={profile.username} className="w-full h-full rounded-full object-cover" />
+                  ) : (
+                    profile.username[0]?.toUpperCase()
+                  )}
+                </div>
+                <div className="text-left min-w-0 flex-1">
+                  <p className="font-semibold text-sm sm:text-base truncate">{profile.username}</p>
+                  <p className={`text-xs ${
+                    profile.status === 'online' ? 'text-green-400' : 'text-muted-foreground'
+                  }`}>
+                    {profile.status === 'online' ? 'Онлайн' : 'Не в сети'}
+                  </p>
+                </div>
+              </button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleBlockToggle}
+                disabled={checkingBlock}
+                className="flex-shrink-0 h-9 w-9"
+                title={isBlocked ? "Разблокировать" : "Заблокировать"}
+              >
+                {checkingBlock ? (
+                  <Icon name="Loader2" size={18} className="animate-spin" />
                 ) : (
-                  profile.username[0]?.toUpperCase()
+                  <Icon name={isBlocked ? "UserCheck" : "Ban"} size={18} className={isBlocked ? "text-green-500" : "text-red-500"} />
                 )}
-              </div>
-              <div className="text-left min-w-0 flex-1">
-                <p className="font-semibold text-sm sm:text-base truncate">{profile.username}</p>
-                <p className={`text-xs ${
-                  profile.status === 'online' ? 'text-green-400' : 'text-muted-foreground'
-                }`}>
-                  {profile.status === 'online' ? 'Онлайн' : 'Не в сети'}
-                </p>
-              </div>
-            </button>
+              </Button>
+            </>
           )}
         </div>
       </div>
