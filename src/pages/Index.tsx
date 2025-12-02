@@ -1358,9 +1358,9 @@ const Index = () => {
             })}
           </div>
           
-          <div className="p-2 md:p-4 border-t bg-white flex-shrink-0">
-            <div className="space-y-1">
-              <div className="flex gap-2">
+          <div className="p-3 md:p-4 border-t bg-white flex-shrink-0">
+            <div className="space-y-2">
+              <div className="relative flex items-end">
                 <textarea
                   placeholder={user ? "Напишите сообщение..." : "Войдите для отправки"}
                   value={messageText}
@@ -1368,20 +1368,21 @@ const Index = () => {
                   onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
                   disabled={!user}
                   maxLength={140}
-                  rows={3}
-                  className="flex-1 px-4 py-3 rounded-lg border border-input bg-background resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-50 text-sm"
+                  rows={1}
+                  className="flex-1 pl-4 pr-14 py-3 rounded-3xl border-2 border-gray-200 bg-gray-50 resize-none focus:outline-none focus:border-red-400 focus:bg-white disabled:opacity-50 text-base transition-all"
+                  style={{ minHeight: '48px', maxHeight: '120px' }}
                 />
                 <Button 
                   onClick={handleSendMessage} 
-                  disabled={!user} 
-                  className="h-auto px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold text-base"
+                  disabled={!user || !messageText.trim()} 
+                  className="absolute right-1.5 bottom-1.5 h-9 w-9 p-0 rounded-full bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:opacity-40 disabled:cursor-not-allowed shadow-md"
                 >
-                  Go
+                  <Icon name="Send" size={18} className="ml-0.5" />
                 </Button>
               </div>
               {user && (
-                <div className="text-right">
-                  <span className={`text-xs ${messageText.length > 120 ? 'text-orange-500' : messageText.length === 140 ? 'text-red-500 font-semibold' : 'text-muted-foreground'}`}>
+                <div className="text-right px-1">
+                  <span className={`text-xs ${messageText.length > 120 ? 'text-orange-500' : messageText.length === 140 ? 'text-red-500 font-semibold' : 'text-gray-400'}`}>
                     {messageText.length}/140
                   </span>
                 </div>
