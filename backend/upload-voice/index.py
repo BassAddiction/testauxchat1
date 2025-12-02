@@ -1,13 +1,13 @@
 '''
-Business: Upload voice message to S3 and return URL
+Business: Upload voice message to ImgBB and return URL
 Args: event with httpMethod, body (base64 encoded audio), headers
-Returns: HTTP response with S3 URL
+Returns: HTTP response with image URL
 '''
 
 import json
 import os
-import boto3
 import base64
+import requests
 from typing import Dict, Any
 from datetime import datetime
 
@@ -62,59 +62,48 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'isBase64Encoded': False
             }
         
-        print('=== STEP 3: Loading S3 credentials ===')
-        s3_access_key = os.environ.get('TIMEWEB_S3_ACCESS_KEY')
-        s3_secret_key = os.environ.get('TIMEWEB_S3_SECRET_KEY')
-        s3_bucket = os.environ.get('TIMEWEB_S3_BUCKET_NAME')
-        s3_endpoint = os.environ.get('TIMEWEB_S3_ENDPOINT', 'https://s3.timeweb.cloud')
-        s3_region = os.environ.get('TIMEWEB_S3_REGION', 'ru-1')
-        print(f'S3 config: endpoint={s3_endpoint}, bucket={s3_bucket}, region={s3_region}')
-        print(f'Credentials present: access_key={bool(s3_access_key)}, secret_key={bool(s3_secret_key)}')
+        print('=== STEP 3: Getting ImgBB API key ===')
+        imgbb_api_key = os.environ.get('IMGBB_API_KEY')
         
-        if not all([s3_access_key, s3_secret_key, s3_bucket]):
+        if not imgbb_api_key:
             return {
                 'statusCode': 500,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'S3 credentials not configured'}),
+                'body': json.dumps({'error': 'ImgBB API key not configured'}),
                 'isBase64Encoded': False
             }
         
-        print('=== STEP 4: Creating S3 client ===')
-        from botocore.config import Config
-        
-        s3_client = boto3.client(
-            's3',
-            aws_access_key_id=s3_access_key,
-            aws_secret_access_key=s3_secret_key,
-            region_name=s3_region,
-            endpoint_url=s3_endpoint,
-            config=Config(
-                signature_version='s3v4',
-                s3={'addressing_style': 'path'},
-                connect_timeout=5,
-                read_timeout=10
-            )
-        )
-        print('S3 client created successfully')
-        
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f'voice-messages/voice_{timestamp}.{file_extension}'
-        content_type = 'audio/webm' if file_extension == 'webm' else 'audio/mp4'
-        print(f'=== STEP 5: Uploading to S3: {filename} ===')
+        print(f'=== STEP 4: Uploading to ImgBB (size: {len(audio_base64)} chars) ===')
         
         try:
-            s3_client.put_object(
-                Bucket=s3_bucket,
-                Key=filename,
-                Body=audio_bytes,
-                ContentType=content_type
+            response = requests.post(
+                'https://api.imgbb.com/1/upload',
+                data={
+                    'key': imgbb_api_key,
+                    'image': audio_base64,
+                    'name': f'voice_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
+                },
+                timeout=15
             )
-            print('Upload successful!')
+            
+            print(f'ImgBB response status: {response.status_code}')
+            
+            if response.status_code != 200:
+                print(f'ImgBB error: {response.text}')
+                return {
+                    'statusCode': 500,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'error': 'ImgBB upload failed'}),
+                    'isBase64Encoded': False
+                }
+            
+            result = response.json()
+            file_url = result['data']['url']
+            print(f'Upload successful! URL: {file_url}')
+            
         except Exception as upload_error:
-            print(f'=== S3 UPLOAD ERROR: {upload_error} ===')
+            print(f'=== UPLOAD ERROR: {upload_error} ===')
             raise
-        
-        file_url = f'{s3_endpoint}/{s3_bucket}/{filename}'
         print(f'File URL: {file_url}')
         
         return {
