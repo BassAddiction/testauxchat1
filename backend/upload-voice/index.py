@@ -102,14 +102,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         content_type = 'audio/webm' if file_extension == 'webm' else 'audio/mp4'
         print(f'=== STEP 5: Uploading to S3: {filename} ===')
         
-        s3_client.put_object(
-            Bucket=s3_bucket,
-            Key=filename,
-            Body=audio_bytes,
-            ContentType=content_type,
-            ACL='public-read'
-        )
-        print('Upload successful!')
+        try:
+            s3_client.put_object(
+                Bucket=s3_bucket,
+                Key=filename,
+                Body=audio_bytes,
+                ContentType=content_type
+            )
+            print('Upload successful!')
+        except Exception as upload_error:
+            print(f'=== S3 UPLOAD ERROR: {upload_error} ===')
+            raise
         
         file_url = f'{s3_endpoint}/{s3_bucket}/{filename}'
         print(f'File URL: {file_url}')
