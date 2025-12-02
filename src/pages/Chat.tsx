@@ -357,29 +357,46 @@ export default function Chat() {
       }
       
       const extension = audioBlob.type.includes('webm') ? 'webm' : 'mp4';
-      const formData = new FormData();
-      formData.append('file', audioBlob, `voice-${Date.now()}.${extension}`);
-
-      console.log('Uploading to S3...');
-      const uploadResponse = await fetch('https://poehali.dev/api/upload-to-s3', {
-        method: 'POST',
-        body: formData
-      });
-
-      console.log('Upload response status:', uploadResponse.status);
       
-      if (!uploadResponse.ok) {
-        const errorText = await uploadResponse.text();
-        console.error('Upload failed:', errorText);
-        toast.error('Ошибка загрузки голосового сообщения');
-        return;
-      }
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64data = reader.result as string;
+        const base64Audio = base64data.split(',')[1];
+        
+        console.log('Uploading to backend...');
+        const uploadResponse = await fetch('https://functions.poehali.dev/upload-voice', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            audioData: base64Audio,
+            extension: extension
+          })
+        });
 
-      const responseData = await uploadResponse.json();
-      console.log('Upload successful, URL:', responseData.url);
+        console.log('Upload response status:', uploadResponse.status);
+        
+        if (!uploadResponse.ok) {
+          const errorData = await uploadResponse.json();
+          console.error('Upload failed:', errorData);
+          toast.error('Ошибка загрузки голосового сообщения');
+          return;
+        }
+
+        const responseData = await uploadResponse.json();
+        console.log('Upload successful, URL:', responseData.url);
+        
+        console.log('Sending message with voiceUrl:', responseData.url, 'duration:', duration);
+        await sendMessage(responseData.url, duration);
+      };
       
-      console.log('Sending message with voiceUrl:', responseData.url, 'duration:', duration);
-      await sendMessage(responseData.url, duration);
+      reader.onerror = () => {
+        console.error('FileReader error');
+        toast.error('Ошибка чтения аудио файла');
+      };
+      
+      reader.readAsDataURL(audioBlob);
     } catch (error) {
       console.error('Upload voice error:', error);
       toast.error('Ошибка отправки голосового сообщения: ' + (error instanceof Error ? error.message : String(error)));
