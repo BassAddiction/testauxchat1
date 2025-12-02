@@ -189,7 +189,14 @@ export default function Chat() {
         setNewMessage('');
         loadMessages();
       } else {
-        toast.error('Ошибка отправки сообщения');
+        const data = await response.json();
+        if (response.status === 403) {
+          toast.error('Вы не можете отправлять сообщения этому пользователю', {
+            description: 'Один из вас заблокировал другого'
+          });
+        } else {
+          toast.error(data.error || 'Ошибка отправки сообщения');
+        }
       }
     } catch (error) {
       toast.error('Ошибка отправки сообщения');
