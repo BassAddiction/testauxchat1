@@ -859,8 +859,8 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex flex-col">
       <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 px-3 py-2 flex justify-between items-center sticky top-0 z-10">
         <div className="flex items-center gap-2">
-          <Icon name="MessageCircle" className="text-primary" size={24} />
-          <h1 className="text-xl font-bold text-primary">auxchat</h1>
+          <Icon name="MessageCircle" className="text-red-500" size={24} />
+          <h1 className="text-xl font-bold text-red-500">AuxChat</h1>
         </div>
         <div className="flex items-center gap-1">
           {user ? (

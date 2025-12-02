@@ -100,8 +100,8 @@ export default function Subscriptions() {
           <Icon name="ArrowLeft" size={20} />
         </Button>
         <div className="flex items-center gap-2">
-          <Icon name="Users" className="text-primary" size={24} />
-          <h1 className="text-xl font-bold text-primary">Мои подписки</h1>
+          <Icon name="Users" className="text-red-500" size={24} />
+          <h1 className="text-xl font-bold text-red-500">Мои подписки</h1>
         </div>
       </header>
 
