@@ -351,7 +351,7 @@ export default function Chat() {
     setRecordingTime(0);
     
     try {
-      console.log('Uploading voice message, size:', audioBlob.size, 'type:', audioBlob.type, 'duration:', duration);
+      console.log('Uploading voice to Timeweb S3, size:', audioBlob.size, 'type:', audioBlob.type, 'duration:', duration);
       
       if (audioBlob.size === 0) {
         console.error('Audio blob is empty');
@@ -366,49 +366,44 @@ export default function Chat() {
       }
       
       const extension = audioBlob.type.includes('webm') ? 'webm' : 'mp4';
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const filename = `voice-messages/voice_${timestamp}.${extension}`;
+      const contentType = audioBlob.type || 'audio/webm';
       
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64data = reader.result as string;
-        const base64Audio = base64data.split(',')[1];
-        
-        console.log('Uploading to backend...');
-        const uploadResponse = await fetch('https://functions.poehali.dev/aa3b9434-ccb8-4c48-824f-3dbf07339f68', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            audioData: base64Audio,
-            extension: extension
-          })
-        });
+      const s3Endpoint = 'https://s3.twcstorage.ru';
+      const s3Bucket = '27fe14e8-df1b0140-f925-43fc-9e59-9c13eb081128';
+      const s3AccessKey = import.meta.env.VITE_TIMEWEB_S3_ACCESS_KEY || 'ba295667';
+      
+      const uploadUrl = `${s3Endpoint}/${s3Bucket}/${filename}`;
+      
+      console.log('Direct upload to Timeweb S3:', uploadUrl);
+      
+      const uploadResponse = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': contentType,
+          'x-amz-acl': 'public-read'
+        },
+        body: audioBlob
+      });
 
-        console.log('Upload response status:', uploadResponse.status);
-        
-        if (!uploadResponse.ok) {
-          const errorData = await uploadResponse.json();
-          console.error('Upload failed:', errorData);
-          toast.error('Ошибка загрузки голосового сообщения');
-          return;
-        }
+      console.log('Upload response status:', uploadResponse.status);
+      
+      if (!uploadResponse.ok) {
+        const errorText = await uploadResponse.text();
+        console.error('Upload failed:', uploadResponse.status, errorText);
+        toast.error('Ошибка загрузки на Timeweb S3');
+        return;
+      }
 
-        const responseData = await uploadResponse.json();
-        console.log('Upload successful, URL:', responseData.url);
-        
-        console.log('Sending message with voiceUrl:', responseData.url, 'duration:', duration);
-        await sendMessage(responseData.url, duration);
-      };
+      const fileUrl = uploadUrl;
+      console.log('Upload successful, URL:', fileUrl);
       
-      reader.onerror = () => {
-        console.error('FileReader error');
-        toast.error('Ошибка чтения аудио файла');
-      };
-      
-      reader.readAsDataURL(audioBlob);
+      console.log('Sending message with voiceUrl:', fileUrl, 'duration:', duration);
+      await sendMessage(fileUrl, duration);
     } catch (error) {
       console.error('Upload voice error:', error);
-      toast.error('Ошибка отправки голосового сообщения: ' + (error instanceof Error ? error.message : String(error)));
+      toast.error('Ошибка отправки голосового: ' + (error instanceof Error ? error.message : String(error)));
     }
   };
 
