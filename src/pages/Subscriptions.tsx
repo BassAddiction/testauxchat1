@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Icon from '@/components/ui/icon';
+import { api } from '@/lib/api';
 
 interface SubscribedUser {
   id: number;
@@ -28,28 +29,12 @@ export default function Subscriptions() {
 
   const loadSubscriptions = async () => {
     try {
-      const response = await fetch(
-        'https://functions.poehali.dev/ac3ea823-b6ec-4987-9602-18e412db6458',
-        {
-          headers: { 'X-User-Id': currentUserId || '0' }
-        }
-      );
-      const data = await response.json();
+      const data = await api.getSubscriptions(currentUserId!);
       const userIds = data.subscribedUserIds || [];
       
       const usersPromises = userIds.map(async (id: number) => {
-        const userResponse = await fetch(
-          `https://functions.poehali.dev/518f730f-1a8e-45ad-b0ed-e9a66c5a3784?user_id=${id}`
-        );
-        const userData = await userResponse.json();
-        
-        const photosResponse = await fetch(
-          `https://functions.poehali.dev/6ab5e5ca-f93c-438c-bc46-7eb7a75e2734?userId=${id}`,
-          {
-            headers: { 'X-User-Id': currentUserId || '0' }
-          }
-        );
-        const photosData = await photosResponse.json();
+        const userData = await api.getUser(id.toString());
+        const photosData = await api.getProfilePhotos(id.toString());
         const avatar = photosData.photos && photosData.photos.length > 0 
           ? photosData.photos[0].url 
           : `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.username}`;
@@ -72,17 +57,8 @@ export default function Subscriptions() {
 
   const handleUnsubscribe = async (userId: number) => {
     try {
-      const response = await fetch(
-        `https://functions.poehali.dev/332c7a6c-5c6e-4f84-85de-81c8fd6ab8d5?targetUserId=${userId}`,
-        {
-          method: 'DELETE',
-          headers: { 'X-User-Id': currentUserId || '0' }
-        }
-      );
-      
-      if (response.ok) {
-        setSubscribedUsers(prev => prev.filter(u => u.id !== userId));
-      }
+      await api.unsubscribe(currentUserId!, userId);
+      setSubscribedUsers(prev => prev.filter(u => u.id !== userId));
     } catch (error) {
       console.error('Unsubscribe error:', error);
     }

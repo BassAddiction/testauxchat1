@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
+import { api } from '@/lib/api';
 
 interface Conversation {
   userId: number;
@@ -25,10 +26,7 @@ export default function Conversations() {
 
   const updateActivity = async () => {
     try {
-      await fetch('https://functions.poehali.dev/a70b420b-cb23-4948-9a56-b8cefc96f976', {
-        method: 'POST',
-        headers: { 'X-User-Id': currentUserId || '0' }
-      });
+      await api.updateActivity(currentUserId!);
     } catch (error) {
       console.error('Error updating activity:', error);
     }
@@ -74,15 +72,7 @@ export default function Conversations() {
 
   const loadConversations = async () => {
     try {
-      const response = await fetch(
-        'https://functions.poehali.dev/aea3125a-7d11-4637-af71-0998dfbaf5b2',
-        {
-          headers: {
-            'X-User-Id': currentUserId || '0'
-          }
-        }
-      );
-      const data = await response.json();
+      const data = await api.getUnreadCount(currentUserId!);
       const newConversations = data.conversations || [];
       
       // Считаем общее количество непрочитанных

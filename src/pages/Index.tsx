@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import Icon from "@/components/ui/icon";
+import { api } from '@/lib/api';
 
 interface Message {
   id: number;
@@ -114,15 +115,7 @@ const Index = () => {
   const loadUnreadCount = async () => {
     if (!userId) return;
     try {
-      const response = await fetch(
-        'https://functions.poehali.dev/aea3125a-7d11-4637-af71-0998dfbaf5b2',
-        {
-          headers: {
-            'X-User-Id': userId.toString()
-          }
-        }
-      );
-      const data = await response.json();
+      const data = await api.getUnreadCount(userId.toString());
       const total = (data.conversations || []).reduce((sum: number, conv: any) => sum + (conv.unreadCount || 0), 0);
       
       // Инициализируем счётчик при первой загрузке
@@ -142,25 +135,7 @@ const Index = () => {
 
   const loadMessages = async (retryCount = 0) => {
     try {
-      const response = await fetch(
-        "https://functions.poehali.dev/392f3078-9f28-4640-ab86-dcabecaf721a?limit=20&offset=0",
-        {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-          },
-        }
-      );
-      
-      if (!response.ok) {
-        console.error("Response not OK:", response.status, response.statusText);
-        if (retryCount < 2) {
-          setTimeout(() => loadMessages(retryCount + 1), 1000);
-        }
-        return;
-      }
-      
-      const data = await response.json();
+      const data = await api.getMessages(20, 0);
       if (data.messages) {
         const formattedMessages: Message[] = data.messages.map((msg: any) => ({
           id: msg.id,
@@ -183,18 +158,8 @@ const Index = () => {
 
   const loadUser = async (id: number) => {
     try {
-      const response = await fetch(
-        `https://functions.poehali.dev/518f730f-1a8e-45ad-b0ed-e9a66c5a3784?user_id=${id}`
-      );
-      const data = await response.json();
-      if (response.ok) {
-        const photosResponse = await fetch(
-          `https://functions.poehali.dev/6ab5e5ca-f93c-438c-bc46-7eb7a75e2734?userId=${id}`,
-          {
-            headers: { 'X-User-Id': id.toString() }
-          }
-        );
-        const photosData = await photosResponse.json();
+      const data = await api.getUser(id.toString());
+      const photosData = await api.getProfilePhotos(id.toString());
         const userAvatar = photosData.photos && photosData.photos.length > 0 
           ? photosData.photos[0].url 
           : `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.username}`;
@@ -217,13 +182,7 @@ const Index = () => {
   const loadSubscribedUsers = async () => {
     if (!userId) return;
     try {
-      const response = await fetch(
-        'https://functions.poehali.dev/ac3ea823-b6ec-4987-9602-18e412db6458',
-        {
-          headers: { 'X-User-Id': userId.toString() }
-        }
-      );
-      const data = await response.json();
+      const data = await api.getSubscriptions(userId.toString());
       setSubscribedUsers(new Set(data.subscribedUserIds || []));
     } catch (error) {
       console.error('Load subscribed users error:', error);
@@ -233,10 +192,7 @@ const Index = () => {
   const updateActivity = async () => {
     if (!userId) return;
     try {
-      await fetch('https://functions.poehali.dev/a70b420b-cb23-4948-9a56-b8cefc96f976', {
-        method: 'POST',
-        headers: { 'X-User-Id': userId.toString() }
-      });
+      await api.updateActivity(userId.toString());
     } catch (error) {
       console.error('Error updating activity:', error);
     }
@@ -452,15 +408,7 @@ const Index = () => {
   const loadProfilePhotos = async () => {
     if (!userId) return;
     try {
-      const response = await fetch(
-        `https://functions.poehali.dev/6ab5e5ca-f93c-438c-bc46-7eb7a75e2734?userId=${userId}`,
-        {
-          headers: {
-            'X-User-Id': userId.toString()
-          }
-        }
-      );
-      const data = await response.json();
+      const data = await api.getProfilePhotos(userId.toString());
       setProfilePhotos(data.photos || []);
     } catch (error) {
       console.error('Error loading photos:', error);
@@ -471,18 +419,8 @@ const Index = () => {
     if (!photoUrl.trim() || !userId) return;
     setIsAddingPhoto(true);
     try {
-      const response = await fetch(
-        'https://functions.poehali.dev/6ab5e5ca-f93c-438c-bc46-7eb7a75e2734',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-User-Id': userId.toString()
-          },
-          body: JSON.stringify({ photoUrl })
-        }
-      );
-      if (response.ok) {
+      await api.addPhoto(userId.toString(), photoUrl);
+      {
         alert('Фото добавлено');
         setPhotoUrl('');
         loadProfilePhotos();
@@ -595,16 +533,8 @@ const Index = () => {
 
   const deletePhoto = async (photoId: number) => {
     if (!userId) return;
-    const response = await fetch(
-      `https://functions.poehali.dev/6ab5e5ca-f93c-438c-bc46-7eb7a75e2734?photoId=${photoId}`,
-      {
-        method: 'DELETE',
-        headers: {
-          'X-User-Id': userId.toString()
-        }
-      }
-    );
-    if (response.ok) {
+    await api.deletePhoto(userId.toString(), photoId);
+    {
       alert('Фото удалено');
       loadProfilePhotos();
     }
@@ -662,20 +592,8 @@ const Index = () => {
 
     if (messageText.trim()) {
       try {
-        const response = await fetch(
-          "https://functions.poehali.dev/8d34c54f-b2de-42c1-ac0c-9f6ecf5e16f6",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              user_id: userId,
-              text: messageText.trim(),
-            }),
-          }
-        );
-        const data = await response.json();
-        
-        if (response.ok) {
+        const data = await api.sendMessage(userId.toString(), messageText.trim());
+        if (data) {
           try {
             const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
             const oscillator = audioContext.createOscillator();
@@ -739,19 +657,8 @@ const Index = () => {
     if (!userId || !selectedUserId) return;
     
     try {
-      const response = await fetch(
-        "https://functions.poehali.dev/332c7a6c-5c6e-4f84-85de-81c8fd6ab8d5",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-User-Id": userId.toString()
-          },
-          body: JSON.stringify({ targetUserId: selectedUserId }),
-        }
-      );
-      
-      if (response.ok) {
+      await api.subscribe(userId.toString(), selectedUserId);
+      {
         setIsSubscribed(true);
         loadSubscribedUsers();
         alert(`Вы подписались на ${selectedUsername}!`);
@@ -767,15 +674,8 @@ const Index = () => {
     if (!userId || !selectedUserId) return;
     
     try {
-      const response = await fetch(
-        `https://functions.poehali.dev/332c7a6c-5c6e-4f84-85de-81c8fd6ab8d5?targetUserId=${selectedUserId}`,
-        {
-          method: "DELETE",
-          headers: { "X-User-Id": userId.toString() }
-        }
-      );
-      
-      if (response.ok) {
+      await api.unsubscribe(userId.toString(), selectedUserId);
+      {
         setIsSubscribed(false);
         loadSubscribedUsers();
         alert(`Вы отписались от ${selectedUsername}`);

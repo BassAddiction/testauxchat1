@@ -13,6 +13,7 @@ import {
 import { Label } from "@/components/ui/label";
 import Icon from "@/components/ui/icon";
 import { useNavigate } from "react-router-dom";
+import { api } from "@/lib/api";
 
 interface User {
   id: number;
@@ -47,10 +48,8 @@ export default function Admin() {
 
   const loadUsers = async () => {
     try {
-      const response = await fetch(
-        "https://functions.poehali.dev/c9561d6d-10c4-4b31-915e-07e239e7ae5f"
-      );
-      const data = await response.json();
+      const currentUserId = localStorage.getItem('auxchat_user_id');
+      const data = await api.getAdminUsers(currentUserId!);
       if (data.users) {
         setUsers(data.users);
       }
@@ -93,16 +92,8 @@ export default function Admin() {
         body.amount = amount;
       }
 
-      const response = await fetch(
-        "https://functions.poehali.dev/c9561d6d-10c4-4b31-915e-07e239e7ae5f",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        }
-      );
-
-      const data = await response.json();
+      const currentUserId = localStorage.getItem('auxchat_user_id');
+      const data = await api.adminAction(currentUserId!, userId, action, amount);
       
       if (response.ok) {
         if (action === "add_energy") {
