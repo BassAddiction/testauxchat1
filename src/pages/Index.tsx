@@ -416,14 +416,12 @@ const Index = () => {
     setIsAddingPhoto(true);
     try {
       await api.addPhoto(userId.toString(), photoUrl);
-      {
-        alert('Фото добавлено');
-        setPhotoUrl('');
-        loadProfilePhotos();
-      } else {
-        const error = await response.json();
-        alert(error.error || 'Ошибка');
-      }
+      alert('Фото добавлено');
+      setPhotoUrl('');
+      loadProfilePhotos();
+    } catch (error) {
+      console.error('Add photo error:', error);
+      alert('Ошибка добавления фото');
     } finally {
       setIsAddingPhoto(false);
     }
@@ -529,10 +527,13 @@ const Index = () => {
 
   const deletePhoto = async (photoId: number) => {
     if (!userId) return;
-    await api.deletePhoto(userId.toString(), photoId);
-    {
+    try {
+      await api.deletePhoto(userId.toString(), photoId);
       alert('Фото удалено');
       loadProfilePhotos();
+    } catch (error) {
+      console.error('Delete photo error:', error);
+      alert('Ошибка удаления фото');
     }
   };
 
@@ -654,12 +655,10 @@ const Index = () => {
     
     try {
       await api.subscribe(userId.toString(), selectedUserId);
-      {
-        setIsSubscribed(true);
-        loadSubscribedUsers();
-        alert(`Вы подписались на ${selectedUsername}!`);
-        setSubscriptionModalOpen(false);
-      }
+      setIsSubscribed(true);
+      loadSubscribedUsers();
+      alert(`Вы подписались на ${selectedUsername}!`);
+      setSubscriptionModalOpen(false);
     } catch (error) {
       console.error("Subscribe error:", error);
       alert("Ошибка подписки");
@@ -671,12 +670,10 @@ const Index = () => {
     
     try {
       await api.unsubscribe(userId.toString(), selectedUserId);
-      {
-        setIsSubscribed(false);
-        loadSubscribedUsers();
-        alert(`Вы отписались от ${selectedUsername}`);
-        setSubscriptionModalOpen(false);
-      }
+      setIsSubscribed(false);
+      loadSubscribedUsers();
+      alert(`Вы отписались от ${selectedUsername}`);
+      setSubscriptionModalOpen(false);
     } catch (error) {
       console.error("Unsubscribe error:", error);
       alert("Ошибка отписки");

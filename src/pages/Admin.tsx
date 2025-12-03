@@ -95,7 +95,15 @@ export default function Admin() {
       const currentUserId = localStorage.getItem('auxchat_user_id');
       const data = await api.adminAction(currentUserId!, userId, action, amount);
       
-      if (response.ok) {
+      if (data.error) {
+        if (data.error === "Invalid admin secret") {
+          alert("Неверный секретный ключ");
+          localStorage.removeItem("admin_secret");
+          setIsAuthenticated(false);
+        } else {
+          alert("Ошибка: " + data.error);
+        }
+      } else {
         if (action === "add_energy") {
           alert(`Добавлено ${amount} энергии`);
         } else if (action === "ban") {
@@ -106,14 +114,6 @@ export default function Admin() {
           alert("Пользователь удалён");
         }
         loadUsers();
-      } else {
-        if (data.error === "Invalid admin secret") {
-          alert("Неверный секретный ключ");
-          localStorage.removeItem("admin_secret");
-          setIsAuthenticated(false);
-        } else {
-          alert("Ошибка: " + (data.error || "Нет доступа"));
-        }
       }
     } catch (error) {
       console.error("Error performing action:", error);
