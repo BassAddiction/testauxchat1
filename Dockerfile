@@ -1,8 +1,8 @@
 # Stage 1: Build frontend
-FROM node:20-alpine AS frontend-builder
+FROM oven/bun:1.1.38-alpine AS frontend-builder
 WORKDIR /app
 COPY package.json bun.lockb ./
-RUN npm install -g bun && bun install
+RUN bun install
 COPY . .
 RUN bun run build
 
