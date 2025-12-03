@@ -1,13 +1,6 @@
-# Stage 1: Build frontend
-FROM oven/bun:1.1.38-alpine AS frontend-builder
-WORKDIR /app
-COPY package.json bun.lockb ./
-RUN bun install
-COPY . .
-RUN bun run build
-
-# Stage 2: Python backend + frontend dist
+# Simple Python backend container
 FROM python:3.11-slim
+
 WORKDIR /app
 
 # Install system dependencies for psycopg2
@@ -16,16 +9,15 @@ RUN apt-get update && apt-get install -y \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
+# Copy requirements and install
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend
+# Copy application code
 COPY main.py .
 
-# Copy built frontend from stage 1
-COPY --from=frontend-builder /app/dist ./dist
-
+# Expose port
 EXPOSE 8000
 
+# Run uvicorn
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
