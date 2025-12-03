@@ -160,20 +160,16 @@ const Index = () => {
     try {
       const data = await api.getUser(id.toString());
       const photosData = await api.getProfilePhotos(id.toString());
-        const userAvatar = photosData.photos && photosData.photos.length > 0 
-          ? photosData.photos[0].url 
-          : `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.username}`;
-        
-        setUser({
-          username: data.username,
-          avatar: userAvatar,
-          phone: data.phone,
-          energy: data.energy,
-        });
-      } else {
-        localStorage.removeItem('auxchat_user_id');
-        setUserId(null);
-      }
+      const userAvatar = photosData.photos && photosData.photos.length > 0 
+        ? photosData.photos[0].url 
+        : `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.username}`;
+      
+      setUser({
+        username: data.username,
+        avatar: userAvatar,
+        phone: data.phone,
+        energy: data.energy,
+      });
     } catch (error) {
       console.error("Load user error:", error);
     }
