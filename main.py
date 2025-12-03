@@ -1,5 +1,7 @@
 from fastapi import FastAPI, HTTPException, Header, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from typing import Optional, List
 import psycopg2
@@ -594,6 +596,17 @@ async def get_private_messages(x_user_id: str = Header(None)):
     user_id = verify_token(x_user_id)
     
     return {"messages": []}
+
+# Serve React frontend
+if os.path.exists("dist"):
+    app.mount("/assets", StaticFiles(directory="dist/assets"), name="assets")
+    
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        file_path = os.path.join("dist", full_path)
+        if os.path.exists(file_path) and os.path.isfile(file_path):
+            return FileResponse(file_path)
+        return FileResponse("dist/index.html")
 
 if __name__ == "__main__":
     import uvicorn
