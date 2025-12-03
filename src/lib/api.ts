@@ -1,5 +1,5 @@
 // API Configuration - Single source of truth for all API calls
-const API_BASE = import.meta.env.PROD ? 'https://auxchat.ru' : 'http://localhost:8000';
+const API_BASE = import.meta.env.PROD ? 'https://api.auxchat.ru' : 'http://localhost:8000';
 
 export const api = {
   // Helper to add auth header
