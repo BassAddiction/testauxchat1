@@ -7,14 +7,19 @@ import hashlib
 from datetime import datetime
 
 app = Flask(__name__)
-CORS(app, resources={
-    r"/*": {
-        "origins": "*",
-        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "X-User-Id"],
-        "supports_credentials": False
-    }
-})
+
+# Get allowed origins from environment or allow all
+allowed_origins = os.environ.get('FLASK_CORS_ORIGINS', '*')
+if allowed_origins != '*':
+    allowed_origins = allowed_origins.split(',')
+
+CORS(app, 
+     origins=allowed_origins,
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+     allow_headers=["Content-Type", "X-User-Id"],
+     supports_credentials=False,
+     expose_headers=["Content-Type"],
+     max_age=3600)
 
 @app.after_request
 def after_request(response):
