@@ -195,5 +195,16 @@ def get_unread_count():
     return jsonify({"count": count})
 
 if __name__ == '__main__':
+    # ASGI support for Timeweb App Platform
+    from asgiref.wsgi import WsgiToAsgi
+    asgi_app = WsgiToAsgi(app)
+    
     port = int(os.environ.get("PORT", 8000))
-    app.run(host="0.0.0.0", port=port)
+    
+    # Use uvicorn for ASGI
+    try:
+        import uvicorn
+        uvicorn.run(asgi_app, host="0.0.0.0", port=port)
+    except ImportError:
+        # Fallback to Flask dev server
+        app.run(host="0.0.0.0", port=port)
