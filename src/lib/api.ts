@@ -2,10 +2,8 @@
 // Production API: Timeweb backend на api.auxchat.ru
 // UPDATED: 2025-12-05 00:05:00 - Fixed API detection
 // Detect production by hostname, not by build mode
-const isProduction = typeof window !== 'undefined' && window.location.hostname === 'auxchat.ru';
-const API_BASE = isProduction
-  ? 'https://api.auxchat.ru' 
-  : 'http://localhost:8000';
+// PRODUCTION API URL - restored after DB import
+const API_BASE = 'https://api.auxchat.ru';
 
 console.log('[API CONFIG] Hostname:', typeof window !== 'undefined' ? window.location.hostname : 'SSR', '| API_BASE:', API_BASE);
 
