@@ -1,18 +1,15 @@
-from fastapi import FastAPI, HTTPException, Header, Request, Response
+from fastapi import FastAPI, HTTPException, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
-from typing import Optional, List
+from pydantic import BaseModel
+from typing import Optional, List, Dict, Any
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import os
+import json
 import hashlib
-import secrets
-from datetime import datetime, timedelta
-import hmac
-import boto3
-from botocore.client import Config
+from datetime import datetime
 
-app = FastAPI(title="BaseAddiction API")
+app = FastAPI(title="AuxChat API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -23,51 +20,38 @@ app.add_middleware(
 )
 
 def get_db():
-    if 'DATABASE_URL' in os.environ:
-        return psycopg2.connect(os.environ['DATABASE_URL'], cursor_factory=RealDictCursor)
-    
-    return psycopg2.connect(
-        host=os.environ['DB_HOST'],
-        port=os.environ['DB_PORT'],
-        database=os.environ['DB_NAME'],
-        user=os.environ['DB_USER'],
-        password=os.environ['DB_PASSWORD'],
-        sslmode='require',
-        cursor_factory=RealDictCursor
-    )
+    dsn = os.environ.get('DATABASE_URL')
+    if not dsn:
+        raise HTTPException(status_code=500, detail="DATABASE_URL not configured")
+    return psycopg2.connect(dsn, cursor_factory=RealDictCursor)
+
+def hash_password(password: str) -> str:
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def verify_user(x_user_id: Optional[str] = Header(None)) -> int:
+    if not x_user_id:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    try:
+        return int(x_user_id)
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid user ID")
 
 # Models
-class RegisterRequest(BaseModel):
-    username: str = Field(..., min_length=3, max_length=50)
-    password: str = Field(..., min_length=6)
-    phone: str
-    code: str
-
 class LoginRequest(BaseModel):
     username: str
     password: str
 
+class RegisterRequest(BaseModel):
+    username: str
+    phone: str
+    password: str
+    code: str
+
 class SendMessageRequest(BaseModel):
     conversation_id: int
-    content: Optional[str] = None
+    content: str
     voice_url: Optional[str] = None
     voice_duration: Optional[int] = None
-
-class CreateConversationRequest(BaseModel):
-    user_id: int
-
-class AddReactionRequest(BaseModel):
-    message_id: int
-    emoji: str
-
-class AddEnergyRequest(BaseModel):
-    amount: int
-
-class SubscribeRequest(BaseModel):
-    plan: str
-
-class UpdateActivityRequest(BaseModel):
-    pass
 
 class SendSMSRequest(BaseModel):
     phone: str
@@ -81,48 +65,76 @@ class ResetPasswordRequest(BaseModel):
     code: str
     new_password: str
 
+class SubscribeRequest(BaseModel):
+    target_user_id: int
+
 class BlacklistRequest(BaseModel):
     user_id: int
+
+class PhotoRequest(BaseModel):
+    photo_url: str
+
+class AdminActionRequest(BaseModel):
+    user_id: int
+    action: str
+    amount: Optional[int] = None
 
 class CreatePaymentRequest(BaseModel):
     amount: float
     description: str
 
-# Auth Helper
-def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
-
-def verify_token(x_user_id: Optional[str] = Header(None)) -> int:
-    if not x_user_id:
-        raise HTTPException(status_code=401, detail="Authentication required")
-    try:
-        return int(x_user_id)
-    except ValueError:
-        raise HTTPException(status_code=401, detail="Invalid user ID")
-
 # Routes
+@app.get("/health")
+async def health():
+    return {"status": "ok", "message": "AuxChat API"}
+
+@app.post("/login")
+async def login(data: LoginRequest):
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        password_hash = hash_password(data.password)
+        cur.execute(
+            "SELECT id, username, energy FROM users WHERE phone = %s AND password_hash = %s",
+            (data.username, password_hash)
+        )
+        user = cur.fetchone()
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+        return {
+            "success": True,
+            "userId": user['id'],
+            "username": user['username'],
+            "energy": user['energy']
+        }
+    finally:
+        cur.close()
+        conn.close()
+
 @app.post("/register")
 async def register(data: RegisterRequest):
     conn = get_db()
     cur = conn.cursor()
-    
     try:
-        cur.execute("SELECT id FROM users WHERE username = %s", (data.username,))
-        if cur.fetchone():
-            raise HTTPException(status_code=400, detail="Username already exists")
-        
+        # Verify SMS code
         cur.execute(
-            "SELECT code FROM sms_codes WHERE phone = %s ORDER BY created_at DESC LIMIT 1",
+            "SELECT code, verified FROM sms_codes WHERE phone = %s ORDER BY created_at DESC LIMIT 1",
             (data.phone,)
         )
         code_row = cur.fetchone()
         if not code_row or code_row['code'] != data.code:
             raise HTTPException(status_code=400, detail="Invalid verification code")
         
+        # Check if user exists
+        cur.execute("SELECT id FROM users WHERE phone = %s", (data.phone,))
+        if cur.fetchone():
+            raise HTTPException(status_code=400, detail="User already exists")
+        
+        # Create user
         password_hash = hash_password(data.password)
         cur.execute(
-            "INSERT INTO users (username, password_hash, phone, energy_balance) VALUES (%s, %s, %s, 100) RETURNING id",
-            (data.username, password_hash, data.phone)
+            "INSERT INTO users (username, phone, password_hash, energy) VALUES (%s, %s, %s, 100) RETURNING id",
+            (data.username, data.phone, password_hash)
         )
         user_id = cur.fetchone()['id']
         conn.commit()
@@ -132,281 +144,286 @@ async def register(data: RegisterRequest):
         cur.close()
         conn.close()
 
-@app.post("/login")
-async def login(data: LoginRequest):
-    conn = get_db()
-    cur = conn.cursor()
-    
-    try:
-        password_hash = hash_password(data.password)
-        cur.execute(
-            "SELECT id, username, energy_balance FROM users WHERE username = %s AND password_hash = %s",
-            (data.username, password_hash)
-        )
-        user = cur.fetchone()
-        
-        if not user:
-            raise HTTPException(status_code=401, detail="Invalid credentials")
-        
-        return {
-            "success": True,
-            "userId": user['id'],
-            "username": user['username'],
-            "energyBalance": user['energy_balance']
-        }
-    finally:
-        cur.close()
-        conn.close()
-
 @app.get("/user")
 async def get_user(x_user_id: str = Header(None)):
-    user_id = verify_token(x_user_id)
+    user_id = verify_user(x_user_id)
     conn = get_db()
     cur = conn.cursor()
-    
     try:
         cur.execute(
-            "SELECT id, username, phone, energy_balance, subscription_plan, subscription_expires_at, created_at FROM users WHERE id = %s",
+            "SELECT id, username, phone, avatar_url, energy, is_admin, bio, status, created_at FROM users WHERE id = %s",
             (user_id,)
         )
         user = cur.fetchone()
-        
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
-        
         return dict(user)
     finally:
         cur.close()
         conn.close()
 
-@app.get("/conversations")
-async def get_conversations(x_user_id: str = Header(None)):
-    user_id = verify_token(x_user_id)
+@app.post("/update-activity")
+async def update_activity(x_user_id: str = Header(None)):
+    user_id = verify_user(x_user_id)
     conn = get_db()
     cur = conn.cursor()
-    
     try:
-        cur.execute("""
-            SELECT 
-                c.id,
-                c.user1_id,
-                c.user2_id,
-                c.created_at,
-                u1.username as user1_username,
-                u2.username as user2_username,
-                m.content as last_message,
-                m.created_at as last_message_at
-            FROM conversations c
-            JOIN users u1 ON c.user1_id = u1.id
-            JOIN users u2 ON c.user2_id = u2.id
-            LEFT JOIN messages m ON m.id = (
-                SELECT id FROM messages 
-                WHERE conversation_id = c.id 
-                ORDER BY created_at DESC LIMIT 1
-            )
-            WHERE c.user1_id = %s OR c.user2_id = %s
-            ORDER BY COALESCE(m.created_at, c.created_at) DESC
-        """, (user_id, user_id))
-        
-        conversations = cur.fetchall()
-        return [dict(c) for c in conversations]
+        cur.execute(
+            "UPDATE users SET last_activity = NOW() WHERE id = %s",
+            (user_id,)
+        )
+        conn.commit()
+        return {"success": True}
     finally:
         cur.close()
         conn.close()
 
-@app.get("/messages/{conversation_id}")
-async def get_messages(conversation_id: int, x_user_id: str = Header(None)):
-    user_id = verify_token(x_user_id)
+@app.post("/update-username")
+async def update_username(username: str, x_user_id: str = Header(None)):
+    user_id = verify_user(x_user_id)
     conn = get_db()
     cur = conn.cursor()
-    
     try:
         cur.execute(
-            "SELECT user1_id, user2_id FROM conversations WHERE id = %s",
-            (conversation_id,)
+            "UPDATE users SET username = %s WHERE id = %s",
+            (username, user_id)
         )
-        conv = cur.fetchone()
-        
-        if not conv or (conv['user1_id'] != user_id and conv['user2_id'] != user_id):
-            raise HTTPException(status_code=403, detail="Access denied")
-        
+        conn.commit()
+        return {"success": True}
+    finally:
+        cur.close()
+        conn.close()
+
+@app.get("/messages")
+async def get_messages(limit: int = 20, offset: int = 0):
+    conn = get_db()
+    cur = conn.cursor()
+    try:
         cur.execute("""
-            SELECT m.*, u.username as sender_username
+            SELECT 
+                m.id, m.text, m.created_at, m.voice_url, m.voice_duration,
+                u.id as user_id, u.username
             FROM messages m
-            JOIN users u ON m.sender_id = u.id
-            WHERE m.conversation_id = %s
-            ORDER BY m.created_at ASC
-        """, (conversation_id,))
+            JOIN users u ON m.user_id = u.id
+            ORDER BY m.created_at DESC
+            LIMIT %s OFFSET %s
+        """, (limit, offset))
         
-        messages = cur.fetchall()
-        return [dict(m) for m in messages]
+        rows = cur.fetchall()
+        
+        if not rows:
+            return {"messages": []}
+        
+        message_ids = [row['id'] for row in rows]
+        user_ids = list(set([row['user_id'] for row in rows]))
+        
+        # Get reactions
+        cur.execute("""
+            SELECT message_id, emoji, COUNT(*) as count
+            FROM message_reactions
+            WHERE message_id = ANY(%s)
+            GROUP BY message_id, emoji
+        """, (message_ids,))
+        
+        reactions_map = {}
+        for r in cur.fetchall():
+            msg_id = r['message_id']
+            if msg_id not in reactions_map:
+                reactions_map[msg_id] = []
+            reactions_map[msg_id].append({'emoji': r['emoji'], 'count': r['count']})
+        
+        # Get avatars
+        cur.execute("""
+            SELECT DISTINCT ON (user_id) user_id, photo_url
+            FROM user_photos
+            WHERE user_id = ANY(%s)
+            ORDER BY user_id, display_order ASC, created_at DESC
+        """, (user_ids,))
+        
+        avatars_map = {row['user_id']: row['photo_url'] for row in cur.fetchall()}
+        
+        messages = []
+        for row in rows:
+            user_avatar = avatars_map.get(row['user_id'], f"https://api.dicebear.com/7.x/avataaars/svg?seed={row['username']}")
+            messages.append({
+                'id': row['id'],
+                'text': row['text'],
+                'created_at': row['created_at'].isoformat() + 'Z',
+                'voice_url': row['voice_url'],
+                'voice_duration': row['voice_duration'],
+                'user': {
+                    'id': row['user_id'],
+                    'username': row['username'],
+                    'avatar': user_avatar
+                },
+                'reactions': reactions_map.get(row['id'], [])
+            })
+        
+        messages.reverse()
+        return {"messages": messages}
     finally:
         cur.close()
         conn.close()
 
 @app.post("/messages")
 async def send_message(data: SendMessageRequest, x_user_id: str = Header(None)):
-    user_id = verify_token(x_user_id)
+    user_id = verify_user(x_user_id)
     conn = get_db()
     cur = conn.cursor()
-    
     try:
-        cur.execute(
-            "SELECT user1_id, user2_id FROM conversations WHERE id = %s",
-            (data.conversation_id,)
-        )
-        conv = cur.fetchone()
-        
-        if not conv or (conv['user1_id'] != user_id and conv['user2_id'] != user_id):
-            raise HTTPException(status_code=403, detail="Access denied")
-        
-        cur.execute(
-            "SELECT energy_balance FROM users WHERE id = %s",
-            (user_id,)
-        )
-        balance = cur.fetchone()['energy_balance']
-        
-        if balance < 1:
-            raise HTTPException(status_code=402, detail="Insufficient energy")
-        
-        cur.execute(
-            "UPDATE users SET energy_balance = energy_balance - 1 WHERE id = %s",
-            (user_id,)
-        )
-        
-        cur.execute(
-            "INSERT INTO messages (conversation_id, sender_id, content, voice_url, voice_duration) VALUES (%s, %s, %s, %s, %s) RETURNING id, created_at",
-            (data.conversation_id, user_id, data.content, data.voice_url, data.voice_duration)
-        )
-        result = cur.fetchone()
-        conn.commit()
-        
-        return {
-            "success": True,
-            "messageId": result['id'],
-            "createdAt": result['created_at'].isoformat()
-        }
-    finally:
-        cur.close()
-        conn.close()
-
-@app.post("/conversations")
-async def create_conversation(data: CreateConversationRequest, x_user_id: str = Header(None)):
-    user_id = verify_token(x_user_id)
-    conn = get_db()
-    cur = conn.cursor()
-    
-    try:
-        if user_id == data.user_id:
-            raise HTTPException(status_code=400, detail="Cannot create conversation with yourself")
-        
-        cur.execute(
-            "SELECT id FROM conversations WHERE (user1_id = %s AND user2_id = %s) OR (user1_id = %s AND user2_id = %s)",
-            (user_id, data.user_id, data.user_id, user_id)
-        )
-        existing = cur.fetchone()
-        
-        if existing:
-            return {"conversationId": existing['id']}
-        
-        cur.execute(
-            "INSERT INTO conversations (user1_id, user2_id) VALUES (%s, %s) RETURNING id",
-            (user_id, data.user_id)
-        )
-        conv_id = cur.fetchone()['id']
-        conn.commit()
-        
-        return {"conversationId": conv_id}
-    finally:
-        cur.close()
-        conn.close()
-
-@app.post("/reactions")
-async def add_reaction(data: AddReactionRequest, x_user_id: str = Header(None)):
-    user_id = verify_token(x_user_id)
-    conn = get_db()
-    cur = conn.cursor()
-    
-    try:
-        cur.execute(
-            "SELECT id FROM reactions WHERE message_id = %s AND user_id = %s",
-            (data.message_id, user_id)
-        )
-        if cur.fetchone():
+        # For public chat, conversation_id=1 means global chat
+        if data.conversation_id == 1:
             cur.execute(
-                "UPDATE reactions SET emoji = %s WHERE message_id = %s AND user_id = %s",
-                (data.emoji, data.message_id, user_id)
+                "INSERT INTO messages (user_id, text, voice_url, voice_duration) VALUES (%s, %s, %s, %s) RETURNING id",
+                (user_id, data.content, data.voice_url, data.voice_duration)
             )
         else:
+            # Private message
             cur.execute(
-                "INSERT INTO reactions (message_id, user_id, emoji) VALUES (%s, %s, %s)",
-                (data.message_id, user_id, data.emoji)
+                "INSERT INTO private_messages (sender_id, receiver_id, text, voice_url, voice_duration) VALUES (%s, %s, %s, %s, %s) RETURNING id",
+                (user_id, data.conversation_id, data.content, data.voice_url, data.voice_duration)
             )
-        conn.commit()
         
-        return {"success": True}
+        message_id = cur.fetchone()['id']
+        conn.commit()
+        return {"success": True, "messageId": message_id}
     finally:
         cur.close()
         conn.close()
 
-@app.post("/energy/add")
-async def add_energy(data: AddEnergyRequest, x_user_id: str = Header(None)):
-    user_id = verify_token(x_user_id)
+@app.get("/conversations")
+async def get_conversations(x_user_id: str = Header(None)):
+    user_id = verify_user(x_user_id)
     conn = get_db()
     cur = conn.cursor()
-    
     try:
-        cur.execute(
-            "UPDATE users SET energy_balance = energy_balance + %s WHERE id = %s RETURNING energy_balance",
-            (data.amount, user_id)
-        )
-        new_balance = cur.fetchone()['energy_balance']
-        conn.commit()
+        # Get unique conversation partners
+        cur.execute("""
+            SELECT DISTINCT 
+                CASE 
+                    WHEN sender_id = %s THEN receiver_id 
+                    ELSE sender_id 
+                END as partner_id
+            FROM private_messages
+            WHERE sender_id = %s OR receiver_id = %s
+        """, (user_id, user_id, user_id))
         
-        return {"success": True, "newBalance": new_balance}
+        partner_ids = [row['partner_id'] for row in cur.fetchall()]
+        
+        if not partner_ids:
+            return {"conversations": []}
+        
+        conversations = []
+        for partner_id in partner_ids:
+            # Get partner info
+            cur.execute("SELECT id, username, avatar_url FROM users WHERE id = %s", (partner_id,))
+            partner = cur.fetchone()
+            
+            # Get last message
+            cur.execute("""
+                SELECT text, created_at, sender_id
+                FROM private_messages
+                WHERE (sender_id = %s AND receiver_id = %s) OR (sender_id = %s AND receiver_id = %s)
+                ORDER BY created_at DESC LIMIT 1
+            """, (user_id, partner_id, partner_id, user_id))
+            last_msg = cur.fetchone()
+            
+            # Get unread count
+            cur.execute("""
+                SELECT COUNT(*) as unread
+                FROM private_messages
+                WHERE sender_id = %s AND receiver_id = %s AND is_read = FALSE
+            """, (partner_id, user_id))
+            unread = cur.fetchone()['unread']
+            
+            conversations.append({
+                'id': partner_id,
+                'partner': dict(partner),
+                'lastMessage': last_msg['text'] if last_msg else None,
+                'lastMessageAt': last_msg['created_at'].isoformat() + 'Z' if last_msg else None,
+                'unreadCount': unread
+            })
+        
+        return {"conversations": conversations}
     finally:
         cur.close()
         conn.close()
 
-@app.post("/subscribe")
-async def subscribe(data: SubscribeRequest, x_user_id: str = Header(None)):
-    user_id = verify_token(x_user_id)
+@app.get("/messages/{conversation_id}")
+async def get_conversation_messages(conversation_id: int, x_user_id: str = Header(None)):
+    user_id = verify_user(x_user_id)
     conn = get_db()
     cur = conn.cursor()
-    
     try:
-        expires_at = datetime.now() + timedelta(days=30)
-        cur.execute(
-            "UPDATE users SET subscription_plan = %s, subscription_expires_at = %s WHERE id = %s",
-            (data.plan, expires_at, user_id)
-        )
+        cur.execute("""
+            SELECT 
+                id, sender_id, receiver_id, text, is_read, created_at, voice_url, voice_duration
+            FROM private_messages
+            WHERE (sender_id = %s AND receiver_id = %s) OR (sender_id = %s AND receiver_id = %s)
+            ORDER BY created_at ASC
+        """, (user_id, conversation_id, conversation_id, user_id))
+        
+        messages = []
+        for row in cur.fetchall():
+            messages.append(dict(row))
+        
+        # Mark as read
+        cur.execute("""
+            UPDATE private_messages SET is_read = TRUE
+            WHERE sender_id = %s AND receiver_id = %s AND is_read = FALSE
+        """, (conversation_id, user_id))
         conn.commit()
         
-        return {"success": True, "expiresAt": expires_at.isoformat()}
+        return {"messages": messages}
+    finally:
+        cur.close()
+        conn.close()
+
+@app.get("/unread-count")
+async def get_unread_count(x_user_id: str = Header(None)):
+    user_id = verify_user(x_user_id)
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT COUNT(*) as count
+            FROM private_messages
+            WHERE receiver_id = %s AND is_read = FALSE
+        """, (user_id,))
+        count = cur.fetchone()['count']
+        return {"count": count}
     finally:
         cur.close()
         conn.close()
 
 @app.get("/subscriptions")
-async def get_subscriptions():
-    return {
-        "plans": [
-            {"id": "basic", "name": "Basic", "price": 299, "energy": 1000},
-            {"id": "premium", "name": "Premium", "price": 599, "energy": 3000},
-            {"id": "unlimited", "name": "Unlimited", "price": 999, "energy": -1}
-        ]
-    }
-
-@app.post("/activity")
-async def update_activity(x_user_id: str = Header(None)):
-    user_id = verify_token(x_user_id)
+async def get_subscriptions(x_user_id: str = Header(None)):
+    user_id = verify_user(x_user_id)
     conn = get_db()
     cur = conn.cursor()
-    
+    try:
+        cur.execute("""
+            SELECT s.subscribed_to_id, u.username, u.avatar_url
+            FROM subscriptions s
+            JOIN users u ON s.subscribed_to_id = u.id
+            WHERE s.subscriber_id = %s
+        """, (user_id,))
+        
+        subscriptions = [dict(row) for row in cur.fetchall()]
+        return {"subscriptions": subscriptions}
+    finally:
+        cur.close()
+        conn.close()
+
+@app.post("/subscribe/{target_user_id}")
+async def subscribe(target_user_id: int, x_user_id: str = Header(None)):
+    user_id = verify_user(x_user_id)
+    conn = get_db()
+    cur = conn.cursor()
     try:
         cur.execute(
-            "UPDATE users SET last_active_at = NOW() WHERE id = %s",
-            (user_id,)
+            "INSERT INTO subscriptions (subscriber_id, subscribed_to_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+            (user_id, target_user_id)
         )
         conn.commit()
         return {"success": True}
@@ -414,187 +431,277 @@ async def update_activity(x_user_id: str = Header(None)):
         cur.close()
         conn.close()
 
-@app.post("/sms/send")
-async def send_sms(data: SendSMSRequest):
-    code = ''.join([str(secrets.randbelow(10)) for _ in range(4)])
-    
+@app.delete("/subscribe/{target_user_id}")
+async def unsubscribe(target_user_id: int, x_user_id: str = Header(None)):
+    user_id = verify_user(x_user_id)
     conn = get_db()
     cur = conn.cursor()
-    
     try:
         cur.execute(
-            "INSERT INTO sms_codes (phone, code) VALUES (%s, %s)",
-            (data.phone, code)
+            "DELETE FROM subscriptions WHERE subscriber_id = %s AND subscribed_to_id = %s",
+            (user_id, target_user_id)
         )
         conn.commit()
-        
-        print(f"SMS Code for {data.phone}: {code}")
-        
-        return {"success": True, "message": "Code sent"}
-    finally:
-        cur.close()
-        conn.close()
-
-@app.post("/sms/verify")
-async def verify_sms(data: VerifySMSRequest):
-    conn = get_db()
-    cur = conn.cursor()
-    
-    try:
-        cur.execute(
-            "SELECT code FROM sms_codes WHERE phone = %s ORDER BY created_at DESC LIMIT 1",
-            (data.phone,)
-        )
-        row = cur.fetchone()
-        
-        if not row or row['code'] != data.code:
-            raise HTTPException(status_code=400, detail="Invalid code")
-        
         return {"success": True}
-    finally:
-        cur.close()
-        conn.close()
-
-@app.post("/password/reset")
-async def reset_password(data: ResetPasswordRequest):
-    conn = get_db()
-    cur = conn.cursor()
-    
-    try:
-        cur.execute(
-            "SELECT code FROM sms_codes WHERE phone = %s ORDER BY created_at DESC LIMIT 1",
-            (data.phone,)
-        )
-        row = cur.fetchone()
-        
-        if not row or row['code'] != data.code:
-            raise HTTPException(status_code=400, detail="Invalid code")
-        
-        password_hash = hash_password(data.new_password)
-        cur.execute(
-            "UPDATE users SET password_hash = %s WHERE phone = %s",
-            (password_hash, data.phone)
-        )
-        conn.commit()
-        
-        return {"success": True}
-    finally:
-        cur.close()
-        conn.close()
-
-@app.post("/blacklist")
-async def blacklist_user(data: BlacklistRequest, x_user_id: str = Header(None)):
-    user_id = verify_token(x_user_id)
-    conn = get_db()
-    cur = conn.cursor()
-    
-    try:
-        cur.execute(
-            "INSERT INTO blacklist (user_id, blocked_user_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
-            (user_id, data.user_id)
-        )
-        conn.commit()
-        
-        return {"success": True}
-    finally:
-        cur.close()
-        conn.close()
-
-@app.get("/admin/users")
-async def admin_users(x_user_id: str = Header(None)):
-    user_id = verify_token(x_user_id)
-    conn = get_db()
-    cur = conn.cursor()
-    
-    try:
-        cur.execute("SELECT is_admin FROM users WHERE id = %s", (user_id,))
-        user = cur.fetchone()
-        
-        if not user or not user.get('is_admin'):
-            raise HTTPException(status_code=403, detail="Admin access required")
-        
-        cur.execute("SELECT id, username, phone, energy_balance, created_at FROM users")
-        users = cur.fetchall()
-        
-        return [dict(u) for u in users]
     finally:
         cur.close()
         conn.close()
 
 @app.get("/profile-photos")
 async def get_profile_photos(x_user_id: str = Header(None)):
-    user_id = verify_token(x_user_id)
+    user_id = verify_user(x_user_id)
     conn = get_db()
     cur = conn.cursor()
-    
     try:
         cur.execute(
-            "SELECT photo_url FROM users WHERE id = %s",
+            "SELECT id, photo_url, display_order, created_at FROM user_photos WHERE user_id = %s ORDER BY display_order, created_at",
             (user_id,)
         )
-        user = cur.fetchone()
+        photos = [dict(row) for row in cur.fetchall()]
+        return {"photos": photos}
+    finally:
+        cur.close()
+        conn.close()
+
+@app.post("/profile-photos")
+async def add_profile_photo(data: PhotoRequest, x_user_id: str = Header(None)):
+    user_id = verify_user(x_user_id)
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "INSERT INTO user_photos (user_id, photo_url) VALUES (%s, %s) RETURNING id",
+            (user_id, data.photo_url)
+        )
+        photo_id = cur.fetchone()['id']
+        conn.commit()
+        return {"success": True, "photoId": photo_id}
+    finally:
+        cur.close()
+        conn.close()
+
+@app.delete("/profile-photos/{photo_id}")
+async def delete_profile_photo(photo_id: int, x_user_id: str = Header(None)):
+    user_id = verify_user(x_user_id)
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "DELETE FROM user_photos WHERE id = %s AND user_id = %s",
+            (photo_id, user_id)
+        )
+        conn.commit()
+        return {"success": True}
+    finally:
+        cur.close()
+        conn.close()
+
+@app.get("/blacklist")
+async def get_blacklist(x_user_id: str = Header(None)):
+    user_id = verify_user(x_user_id)
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT b.blocked_user_id, u.username
+            FROM blacklist b
+            JOIN users u ON b.blocked_user_id = u.id
+            WHERE b.user_id = %s
+        """, (user_id,))
+        blocked = [dict(row) for row in cur.fetchall()]
+        return {"blocked": blocked}
+    finally:
+        cur.close()
+        conn.close()
+
+@app.get("/blacklist/{target_user_id}")
+async def check_block_status(target_user_id: int, x_user_id: str = Header(None)):
+    user_id = verify_user(x_user_id)
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "SELECT id FROM blacklist WHERE user_id = %s AND blocked_user_id = %s",
+            (user_id, target_user_id)
+        )
+        blocked = cur.fetchone() is not None
+        return {"blocked": blocked}
+    finally:
+        cur.close()
+        conn.close()
+
+@app.post("/blacklist")
+async def block_user(data: BlacklistRequest, x_user_id: str = Header(None)):
+    user_id = verify_user(x_user_id)
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "INSERT INTO blacklist (user_id, blocked_user_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+            (user_id, data.user_id)
+        )
+        conn.commit()
+        return {"success": True}
+    finally:
+        cur.close()
+        conn.close()
+
+@app.delete("/blacklist/{target_user_id}")
+async def unblock_user(target_user_id: int, x_user_id: str = Header(None)):
+    user_id = verify_user(x_user_id)
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "DELETE FROM blacklist WHERE user_id = %s AND blocked_user_id = %s",
+            (user_id, target_user_id)
+        )
+        conn.commit()
+        return {"success": True}
+    finally:
+        cur.close()
+        conn.close()
+
+@app.post("/send-sms")
+async def send_sms(data: SendSMSRequest):
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        # Generate 4-digit code
+        import random
+        code = str(random.randint(1000, 9999))
         
-        return {"photos": [user['photo_url']] if user and user['photo_url'] else []}
+        # Store code
+        cur.execute(
+            "INSERT INTO sms_codes (phone, code, expires_at) VALUES (%s, %s, NOW() + INTERVAL '10 minutes')",
+            (data.phone, code)
+        )
+        conn.commit()
+        
+        # In production, send via SMS.RU API
+        # For now, just return success
+        return {"success": True, "code": code}  # Remove code in production
+    finally:
+        cur.close()
+        conn.close()
+
+@app.post("/verify-sms")
+async def verify_sms(data: VerifySMSRequest):
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "SELECT id FROM sms_codes WHERE phone = %s AND code = %s AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1",
+            (data.phone, data.code)
+        )
+        if not cur.fetchone():
+            raise HTTPException(status_code=400, detail="Invalid or expired code")
+        
+        cur.execute(
+            "UPDATE sms_codes SET verified = TRUE WHERE phone = %s AND code = %s",
+            (data.phone, data.code)
+        )
+        conn.commit()
+        return {"success": True}
+    finally:
+        cur.close()
+        conn.close()
+
+@app.post("/reset-password")
+async def reset_password(data: ResetPasswordRequest):
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        # Verify code
+        cur.execute(
+            "SELECT id FROM sms_codes WHERE phone = %s AND code = %s AND verified = TRUE ORDER BY created_at DESC LIMIT 1",
+            (data.phone, data.code)
+        )
+        if not cur.fetchone():
+            raise HTTPException(status_code=400, detail="Invalid verification code")
+        
+        # Update password
+        password_hash = hash_password(data.new_password)
+        cur.execute(
+            "UPDATE users SET password_hash = %s WHERE phone = %s",
+            (password_hash, data.phone)
+        )
+        conn.commit()
+        return {"success": True}
+    finally:
+        cur.close()
+        conn.close()
+
+@app.get("/admin/users")
+async def admin_get_users(x_user_id: str = Header(None)):
+    user_id = verify_user(x_user_id)
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        # Check if admin
+        cur.execute("SELECT is_admin FROM users WHERE id = %s", (user_id,))
+        if not cur.fetchone()['is_admin']:
+            raise HTTPException(status_code=403, detail="Admin access required")
+        
+        cur.execute("SELECT id, username, phone, energy, is_banned, created_at FROM users ORDER BY created_at DESC")
+        users = [dict(row) for row in cur.fetchall()]
+        return {"users": users}
+    finally:
+        cur.close()
+        conn.close()
+
+@app.post("/admin/users")
+async def admin_action(data: AdminActionRequest, x_user_id: str = Header(None)):
+    user_id = verify_user(x_user_id)
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        # Check if admin
+        cur.execute("SELECT is_admin FROM users WHERE id = %s", (user_id,))
+        if not cur.fetchone()['is_admin']:
+            raise HTTPException(status_code=403, detail="Admin access required")
+        
+        if data.action == 'ban':
+            cur.execute("UPDATE users SET is_banned = TRUE WHERE id = %s", (data.user_id,))
+        elif data.action == 'unban':
+            cur.execute("UPDATE users SET is_banned = FALSE WHERE id = %s", (data.user_id,))
+        elif data.action == 'add_energy':
+            cur.execute("UPDATE users SET energy = energy + %s WHERE id = %s", (data.amount, data.user_id))
+        elif data.action == 'remove_energy':
+            cur.execute("UPDATE users SET energy = energy - %s WHERE id = %s", (data.amount, data.user_id))
+        
+        conn.commit()
+        return {"success": True}
     finally:
         cur.close()
         conn.close()
 
 @app.get("/upload-url")
-async def generate_upload_url(contentType: str, extension: str):
-    s3_client = boto3.client(
-        's3',
-        endpoint_url='https://s3.twcstorage.ru',
-        aws_access_key_id=os.environ['TIMEWEB_S3_ACCESS_KEY'],
-        aws_secret_access_key=os.environ['TIMEWEB_S3_SECRET_KEY'],
-        config=Config(signature_version='s3v4', s3={'addressing_style': 'path'})
-    )
-    
-    bucket_name = '27fe14e8-df1b0140-f925-43fc-9e59-9c13eb081128'
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
-    file_key = f'voice-messages/voice_{timestamp}.{extension}'
-    
-    upload_url = s3_client.generate_presigned_url(
-        'put_object',
-        Params={
-            'Bucket': bucket_name,
-            'Key': file_key,
-            'ContentType': contentType
-        },
-        ExpiresIn=300
-    )
-    
-    file_url = f'https://s3.twcstorage.ru/{bucket_name}/{file_key}'
-    
-    return {'uploadUrl': upload_url, 'fileUrl': file_url}
+async def get_upload_url(contentType: str, extension: str):
+    # Return mock upload URL for now
+    # In production, integrate with S3/Timeweb storage
+    return {
+        "uploadUrl": f"https://storage.example.com/upload",
+        "fileUrl": f"https://storage.example.com/files/photo.{extension}"
+    }
 
 @app.post("/payment/create")
 async def create_payment(data: CreatePaymentRequest, x_user_id: str = Header(None)):
-    user_id = verify_token(x_user_id)
-    
+    user_id = verify_user(x_user_id)
+    # YooKassa integration placeholder
     return {
-        "paymentId": "test_payment_" + secrets.token_hex(8),
-        "paymentUrl": "https://payment.example.com/pay",
-        "amount": data.amount
+        "success": True,
+        "paymentUrl": "https://yookassa.ru/checkout/payments/mock",
+        "paymentId": "mock-payment-id"
     }
 
 @app.post("/payment/webhook")
 async def payment_webhook(request: Request):
+    # YooKassa webhook handler placeholder
     body = await request.json()
-    
-    print("Payment webhook:", body)
-    
     return {"success": True}
-
-@app.get("/private-messages")
-async def get_private_messages(x_user_id: str = Header(None)):
-    user_id = verify_token(x_user_id)
-    
-    return {"messages": []}
-
-@app.get("/health")
-async def health():
-    return {"status": "ok"}
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
