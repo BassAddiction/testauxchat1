@@ -5,6 +5,6 @@
     "dependencies": "requirements.txt"
   },
   "run": {
-    "command": "uvicorn main:app --host 0.0.0.0 --port 8080"
+    "command": "gunicorn --bind 0.0.0.0:8080 --workers 2 main:app"
   }
 }
