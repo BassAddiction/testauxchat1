@@ -7,7 +7,14 @@ import hashlib
 from datetime import datetime
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={
+    r"/*": {
+        "origins": ["https://auxchat.ru", "https://preview--auxchat-energy-messages.poehali.dev", "*"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "X-User-Id"],
+        "supports_credentials": False
+    }
+})
 
 def get_db():
     db_host = os.environ.get('DB_HOST')
