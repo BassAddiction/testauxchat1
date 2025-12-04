@@ -10,9 +10,10 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 # Copy application code
 COPY main.py ./
+COPY asgi.py ./
 
-# Expose port
-EXPOSE 8080
+# Expose port (use 8000 or $PORT from env)
+EXPOSE 8000
 
-# Run application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Run Flask through ASGI adapter with uvicorn
+CMD ["uvicorn", "asgi:application", "--host", "0.0.0.0", "--port", "8000"]
