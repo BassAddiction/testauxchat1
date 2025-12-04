@@ -117,22 +117,24 @@ async def options_handler(full_path: str):
 
 @app.get("/health")
 async def health():
-    # Test DB config
+    # Test DB config - Updated 2025-12-04 23:32
     db_host = os.environ.get('DB_HOST', 'NOT_SET')
     db_port = os.environ.get('DB_PORT', 'NOT_SET')
     db_name = os.environ.get('DB_NAME', 'NOT_SET')
     db_user = os.environ.get('DB_USER', 'NOT_SET')
     db_pass = os.environ.get('DB_PASSWORD', 'NOT_SET')
+    database_url = os.environ.get('DATABASE_URL', 'NOT_SET')
     
     return {
         "status": "ok", 
-        "message": "AuxChat API",
+        "message": "AuxChat API v2 - 2025-12-04 23:32",
         "db_config": {
             "host": db_host[:20] if db_host != 'NOT_SET' else 'NOT_SET',
             "port": db_port,
             "name": db_name,
             "user": db_user,
-            "pass": "***" if db_pass != 'NOT_SET' else 'NOT_SET'
+            "pass_length": len(db_pass) if db_pass != 'NOT_SET' else 0,
+            "database_url_exists": database_url != 'NOT_SET'
         }
     }
 
