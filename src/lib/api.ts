@@ -1,11 +1,8 @@
 // API Configuration - Single source of truth for all API calls
-// Production API: Timeweb backend на api.auxchat.ru
-// UPDATED: 2025-12-05 00:05:00 - Fixed API detection
-// Detect production by hostname, not by build mode
-// PRODUCTION API URL - restored after DB import
-const API_BASE = 'https://api.auxchat.ru';
+// Use environment variable or fallback to Timeweb backend
+const API_BASE = import.meta.env.VITE_API_URL || 'https://api.auxchat.ru';
 
-console.log('[API CONFIG] Hostname:', typeof window !== 'undefined' ? window.location.hostname : 'SSR', '| API_BASE:', API_BASE);
+console.log('[API CONFIG] Using API_BASE:', API_BASE, '| Source:', import.meta.env.VITE_API_URL ? 'env' : 'default');
 
 export const api = {
   // Helper to add auth header
