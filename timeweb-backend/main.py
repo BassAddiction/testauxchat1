@@ -23,6 +23,12 @@ def get_db():
     dsn = os.environ.get('DATABASE_URL')
     if not dsn:
         raise HTTPException(status_code=500, detail="DATABASE_URL not configured")
+    
+    # URL-decode password if needed
+    from urllib.parse import unquote
+    if '%' in dsn:
+        dsn = unquote(dsn)
+    
     return psycopg2.connect(dsn, cursor_factory=RealDictCursor)
 
 def hash_password(password: str) -> str:
