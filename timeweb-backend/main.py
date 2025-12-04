@@ -9,7 +9,7 @@ from datetime import datetime
 app = Flask(__name__)
 CORS(app, resources={
     r"/*": {
-        "origins": ["https://auxchat.ru", "https://preview--auxchat-energy-messages.poehali.dev", "*"],
+        "origins": "*",  # Allow ALL origins (including poehali.dev subdomains)
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "X-User-Id"],
         "supports_credentials": False
