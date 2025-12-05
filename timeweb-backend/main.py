@@ -11,6 +11,13 @@ import sys
 app = Flask(__name__, static_folder='static', static_url_path='')
 CORS(app)
 
+# Print startup info
+print("=" * 50)
+print("AuxChat Flask Server Starting...")
+print(f"Static folder: {app.static_folder}")
+print(f"Environment variables: {list(os.environ.keys())}")
+print("=" * 50)
+
 # Error handler to see what's failing
 @app.errorhandler(Exception)
 def handle_error(e):

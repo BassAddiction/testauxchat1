@@ -26,8 +26,5 @@ COPY --from=frontend-build /app/dist /app/static
 
 EXPOSE 8080
 
-# Healthcheck for Timeweb - check /api/health endpoint
-HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=3 \
-  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/health')" || exit 1
-
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-", "main:app"]
+# Start with simple Flask dev server first to test
+CMD ["python", "-m", "flask", "run", "--host=0.0.0.0", "--port=8080"]
