@@ -1,6 +1,6 @@
 // API Configuration
 const API_BASE_URL = import.meta.env.PROD 
-  ? 'https://auxchat.ru' 
+  ? '/api' 
   : 'http://localhost:8000';
 
 export const API = {
