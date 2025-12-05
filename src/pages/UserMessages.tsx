@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Icon from '@/components/ui/icon';
-import { api } from '@/lib/api';
 
 interface Message {
   id: number;
@@ -42,8 +41,18 @@ export default function UserMessages() {
 
   const loadProfile = async () => {
     try {
-      const data = await api.getUser(userId);
-      const photosData = await api.getProfilePhotos(userId!);
+      const response = await fetch(
+        `https://functions.poehali.dev/518f730f-1a8e-45ad-b0ed-e9a66c5a3784?user_id=${userId}`
+      );
+      const data = await response.json();
+      
+      const photosResponse = await fetch(
+        `https://functions.poehali.dev/6ab5e5ca-f93c-438c-bc46-7eb7a75e2734?userId=${userId}`,
+        {
+          headers: { 'X-User-Id': currentUserId || '0' }
+        }
+      );
+      const photosData = await photosResponse.json();
       const userAvatar = photosData.photos && photosData.photos.length > 0 
         ? photosData.photos[0].url 
         : `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.username}`;
@@ -56,19 +65,31 @@ export default function UserMessages() {
 
   const loadMessages = async () => {
     try {
-      const data = await api.getMessages(100, 0);
-      if (data.messages) {
-        const userMessages = data.messages
-          .filter((msg: any) => msg.user.id === Number(userId))
-          .map((msg: any) => ({
-            id: msg.id,
-            userId: msg.user.id,
-            username: msg.user.username,
-            avatar: msg.user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.user.username}`,
-            text: msg.text,
-            timestamp: new Date(msg.created_at),
-          }));
-        setMessages(userMessages);
+      const response = await fetch(
+        `https://functions.poehali.dev/392f3078-9f28-4640-ab86-dcabecaf721a?limit=100&offset=0`,
+        {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          },
+        }
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.messages) {
+          const userMessages = data.messages
+            .filter((msg: any) => msg.user.id === Number(userId))
+            .map((msg: any) => ({
+              id: msg.id,
+              userId: msg.user.id,
+              username: msg.user.username,
+              avatar: msg.user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.user.username}`,
+              text: msg.text,
+              timestamp: new Date(msg.created_at),
+            }));
+          setMessages(userMessages);
+        }
       }
     } catch (error) {
       console.error('Error loading messages:', error);
