@@ -161,7 +161,9 @@ def handle_upload(event: Dict[str, Any]) -> Dict[str, Any]:
             Bucket=s3_bucket,
             Key=filename,
             Body=audio_data,
-            ContentType='audio/webm'
+            ContentType='audio/webm',
+            ACL='public-read',
+            CacheControl='public, max-age=31536000'
         )
         
         file_url = f'{s3_endpoint}/{s3_bucket}/{filename}'
