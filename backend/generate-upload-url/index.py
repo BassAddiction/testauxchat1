@@ -157,6 +157,22 @@ def handle_upload(event: Dict[str, Any]) -> Dict[str, Any]:
             config=Config(signature_version='s3v4')
         )
         
+        # Настройка CORS для бакета (один раз)
+        try:
+            s3_client.put_bucket_cors(
+                Bucket=s3_bucket,
+                CORSConfiguration={
+                    'CORSRules': [{
+                        'AllowedOrigins': ['*'],
+                        'AllowedMethods': ['GET', 'HEAD', 'PUT', 'POST'],
+                        'AllowedHeaders': ['*'],
+                        'MaxAgeSeconds': 3600
+                    }]
+                }
+            )
+        except Exception as cors_error:
+            print(f'CORS setup warning: {cors_error}')
+        
         s3_client.put_object(
             Bucket=s3_bucket,
             Key=filename,
