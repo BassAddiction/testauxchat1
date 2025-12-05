@@ -43,32 +43,13 @@ def get_db():
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
 
+@app.route('/health', methods=['GET'])
 @app.route('/api/health', methods=['GET', 'OPTIONS'])
 def health():
     if request.method == 'OPTIONS':
         return '', 200
     
-    db_host = os.environ.get('DB_HOST', 'NOT_SET')
-    db_port = os.environ.get('DB_PORT', 'NOT_SET')
-    db_name = os.environ.get('DB_NAME', 'NOT_SET')
-    db_user = os.environ.get('DB_USER', 'NOT_SET')
-    db_pass = os.environ.get('DB_PASSWORD', 'NOT_SET')
-    
-    # Show ALL env vars for debugging
-    all_env = {k: v[:20] if len(v) > 20 else v for k, v in os.environ.items()}
-    
-    return jsonify({
-        "status": "ok",
-        "message": "AuxChat API Flask",
-        "db_config": {
-            "host": db_host[:20] if db_host != 'NOT_SET' else 'NOT_SET',
-            "port": db_port,
-            "name": db_name,
-            "user": db_user,
-            "pass_length": len(db_pass) if db_pass != 'NOT_SET' else 0
-        },
-        "all_env_vars": all_env
-    })
+    return jsonify({"status": "ok", "service": "auxchat"}), 200
 
 @app.route('/api/messages', methods=['GET', 'POST', 'OPTIONS'])
 def messages():

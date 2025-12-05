@@ -26,5 +26,9 @@ COPY --from=frontend-build /app/dist /app/static
 
 EXPOSE 8080
 
+# Add healthcheck
+HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=3 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/health').read()" || exit 1
+
 # Use gunicorn with logging
 CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "1", "--timeout", "120", "--log-level", "debug", "--access-logfile", "-", "--error-logfile", "-", "main:app"]
