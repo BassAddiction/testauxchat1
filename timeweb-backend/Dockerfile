@@ -8,13 +8,8 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-# Stage 2: Backend + Nginx
+# Stage 2: Backend only (Flask serves everything)
 FROM python:3.11-slim
-
-# Install nginx and supervisor
-RUN apt-get update && \
-    apt-get install -y nginx supervisor && \
-    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -27,56 +22,8 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY timeweb-backend/main.py ./
 
 # Copy frontend build from stage 1
-COPY --from=frontend-build /app/dist /var/www/html
-
-# Nginx configuration
-RUN echo 'server {\n\
-    listen 8080;\n\
-    root /var/www/html;\n\
-    index index.html;\n\
-    \n\
-    location / {\n\
-        try_files $uri $uri/ /index.html;\n\
-    }\n\
-    \n\
-    location /health {\n\
-        proxy_pass http://127.0.0.1:5000/health;\n\
-        proxy_set_header Host $host;\n\
-        proxy_set_header X-Real-IP $remote_addr;\n\
-    }\n\
-    \n\
-    location /api/ {\n\
-        rewrite ^/api/(.*) /$1 break;\n\
-        proxy_pass http://127.0.0.1:5000;\n\
-        proxy_set_header Host $host;\n\
-        proxy_set_header X-Real-IP $remote_addr;\n\
-    }\n\
-}' > /etc/nginx/sites-available/default
-
-# Supervisor config (run both nginx and gunicorn)
-RUN echo '[supervisord]\n\
-nodaemon=true\n\
-loglevel=info\n\
-\n\
-[program:gunicorn]\n\
-command=gunicorn --bind 127.0.0.1:5000 --workers 2 --timeout 120 --log-level debug main:app\n\
-directory=/app\n\
-autostart=true\n\
-autorestart=true\n\
-stdout_logfile=/dev/stdout\n\
-stdout_logfile_maxbytes=0\n\
-stderr_logfile=/dev/stderr\n\
-stderr_logfile_maxbytes=0\n\
-\n\
-[program:nginx]\n\
-command=nginx -g "daemon off;"\n\
-autostart=true\n\
-autorestart=true\n\
-stdout_logfile=/dev/stdout\n\
-stdout_logfile_maxbytes=0\n\
-stderr_logfile=/dev/stderr\n\
-stderr_logfile_maxbytes=0' > /etc/supervisor/conf.d/supervisord.conf
+COPY --from=frontend-build /app/dist /app/static
 
 EXPOSE 8080
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-", "main:app"]

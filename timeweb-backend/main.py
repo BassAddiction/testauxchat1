@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -6,7 +6,7 @@ import os
 import hashlib
 from datetime import datetime
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', static_url_path='')
 CORS(app)
 
 def get_db():
@@ -466,6 +466,14 @@ def get_unread_count():
     conn.close()
     
     return jsonify({"count": count})
+
+# Frontend routes - serve React app
+@app.route('/')
+@app.route('/<path:path>')
+def serve_frontend(path=''):
+    if path and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    return send_from_directory(app.static_folder, 'index.html')
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8000))
