@@ -59,14 +59,21 @@ def handle_upload(event: Dict[str, Any]) -> Dict[str, Any]:
                 'isBase64Encoded': False
             }
         
-        # Get audio data
-        body = event.get('body', '')
-        is_base64 = event.get('isBase64Encoded', False)
+        # Parse JSON body with base64 audio
+        body_str = event.get('body', '{}')
+        body_data = json.loads(body_str)
+        audio_base64 = body_data.get('audioData', '')
         
-        if is_base64:
-            audio_data = base64.b64decode(body)
-        else:
-            audio_data = body.encode() if isinstance(body, str) else body
+        if not audio_base64:
+            return {
+                'statusCode': 400,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'No audio data provided'}),
+                'isBase64Encoded': False
+            }
+        
+        # Decode base64
+        audio_data = base64.b64decode(audio_base64)
         
         # Generate filename
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')

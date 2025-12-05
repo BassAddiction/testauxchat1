@@ -52,11 +52,15 @@ export default function MessageInput({
 
   const uploadVoiceMessage = async (audioBlob: Blob) => {
     try {
+      // Конвертируем в base64 для надежной передачи
+      const arrayBuffer = await audioBlob.arrayBuffer();
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+      
       // Upload через бэкенд (обход CORS)
       const uploadResponse = await fetch(API.uploadUrl, {
         method: 'POST',
-        body: audioBlob,
-        headers: { 'Content-Type': 'audio/webm' }
+        body: JSON.stringify({ audioData: base64 }),
+        headers: { 'Content-Type': 'application/json' }
       });
 
       if (!uploadResponse.ok) {
