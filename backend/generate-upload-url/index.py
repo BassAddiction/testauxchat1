@@ -19,7 +19,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 200,
             'headers': {
                 'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, OPTIONS',
+                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type',
                 'Access-Control-Max-Age': '86400'
             },
@@ -27,11 +27,85 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'isBase64Encoded': False
         }
     
+    # Handle POST - direct upload via backend
+    if method == 'POST':
+        return handle_upload(event)
+    
+    # Handle GET - generate presigned URL (old way)
     if method != 'GET':
         return {
             'statusCode': 405,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
             'body': json.dumps({'error': 'Method not allowed'}),
+            'isBase64Encoded': False
+        }
+
+def handle_upload(event: Dict[str, Any]) -> Dict[str, Any]:
+    """Upload audio directly through backend to avoid CORS"""
+    import base64
+    
+    try:
+        s3_access_key = os.environ.get('TIMEWEB_S3_ACCESS_KEY')
+        s3_secret_key = os.environ.get('TIMEWEB_S3_SECRET_KEY')
+        s3_bucket = os.environ.get('TIMEWEB_S3_BUCKET_NAME')
+        s3_endpoint = os.environ.get('TIMEWEB_S3_ENDPOINT', 'https://s3.twcstorage.ru')
+        s3_region = os.environ.get('TIMEWEB_S3_REGION', 'ru-1')
+        
+        if not all([s3_access_key, s3_secret_key, s3_bucket]):
+            return {
+                'statusCode': 500,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'S3 credentials not configured'}),
+                'isBase64Encoded': False
+            }
+        
+        # Get audio data
+        body = event.get('body', '')
+        is_base64 = event.get('isBase64Encoded', False)
+        
+        if is_base64:
+            audio_data = base64.b64decode(body)
+        else:
+            audio_data = body.encode() if isinstance(body, str) else body
+        
+        # Generate filename
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+        filename = f'voice-messages/voice_{timestamp}.webm'
+        
+        # Upload to S3
+        s3_client = boto3.client(
+            's3',
+            endpoint_url=s3_endpoint,
+            aws_access_key_id=s3_access_key,
+            aws_secret_access_key=s3_secret_key,
+            region_name=s3_region,
+            config=Config(signature_version='s3v4')
+        )
+        
+        s3_client.put_object(
+            Bucket=s3_bucket,
+            Key=filename,
+            Body=audio_data,
+            ContentType='audio/webm'
+        )
+        
+        file_url = f'{s3_endpoint}/{s3_bucket}/{filename}'
+        
+        return {
+            'statusCode': 200,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'fileUrl': file_url}),
+            'isBase64Encoded': False
+        }
+        
+    except Exception as e:
+        print(f'Upload error: {e}')
+        import traceback
+        print(traceback.format_exc())
+        return {
+            'statusCode': 500,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': str(e)}),
             'isBase64Encoded': False
         }
     

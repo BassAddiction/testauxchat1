@@ -1,9 +1,0 @@
-[
-  {
-    "name": "Get database export",
-    "event": {
-      "httpMethod": "GET",
-      "queryStringParameters": {}
-    }
-  }
-]

@@ -52,11 +52,9 @@ export default function MessageInput({
 
   const uploadVoiceMessage = async (audioBlob: Blob) => {
     try {
-      const extension = 'webm';
-      const { uploadUrl, fileUrl } = await api.getUploadUrl('audio/webm', extension);
-
-      const uploadResponse = await fetch(uploadUrl, {
-        method: 'PUT',
+      // Upload через бэкенд (обход CORS)
+      const uploadResponse = await fetch(API.uploadUrl, {
+        method: 'POST',
         body: audioBlob,
         headers: { 'Content-Type': 'audio/webm' }
       });
@@ -66,6 +64,7 @@ export default function MessageInput({
         return;
       }
 
+      const { fileUrl } = await uploadResponse.json();
       await sendMessage(fileUrl, recordingTime);
     } catch (error) {
       console.error('Error uploading voice:', error);
