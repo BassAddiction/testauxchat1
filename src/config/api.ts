@@ -1,36 +1,36 @@
 // API Configuration
-const API_BASE_URL = '';
+import func2url from '../../backend/func2url.json';
 
 export const API = {
   // Auth
-  register: `${API_BASE_URL}/register`,
-  login: `${API_BASE_URL}/login`,
+  register: func2url.register,
+  login: func2url.login,
   
   // User
-  user: `${API_BASE_URL}/user`,
-  updateActivity: `${API_BASE_URL}/update-activity`,
+  user: func2url['get-user'],
+  updateActivity: func2url['update-activity'],
   
   // Messages
-  messages: `${API_BASE_URL}/messages`,
-  conversationMessages: (id: number) => `${API_BASE_URL}/messages/${id}`,
-  conversations: `${API_BASE_URL}/conversations`,
-  unreadCount: `${API_BASE_URL}/unread-count`,
+  messages: func2url['get-messages'],
+  conversationMessages: (id: number) => `${func2url['private-messages']}?conversation_id=${id}`,
+  conversations: func2url['get-conversations'],
+  unreadCount: func2url['get-messages'] + '?unread=true',
   
   // Subscriptions
-  subscriptions: `${API_BASE_URL}/subscriptions`,
-  subscribe: (userId: number) => `${API_BASE_URL}/subscribe/${userId}`,
+  subscriptions: func2url['get-subscriptions'],
+  subscribe: (userId: number) => `${func2url.subscribe}?user_id=${userId}`,
   
   // Photos
-  profilePhotos: `${API_BASE_URL}/profile-photos`,
-  uploadUrl: `${API_BASE_URL}/upload-url`,
+  profilePhotos: func2url['profile-photos'],
+  uploadUrl: func2url['generate-upload-url'],
   
   // Blacklist
-  blacklist: `${API_BASE_URL}/blacklist`,
+  blacklist: func2url.blacklist,
   
   // Admin
-  adminUsers: `${API_BASE_URL}/admin/users`,
+  adminUsers: func2url['admin-users'],
   
   // Payment
-  createPayment: `${API_BASE_URL}/payment/create`,
-  paymentWebhook: `${API_BASE_URL}/payment/webhook`,
+  createPayment: func2url['create-payment'],
+  paymentWebhook: func2url['payment-webhook'],
 };
