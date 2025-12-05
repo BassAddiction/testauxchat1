@@ -495,18 +495,14 @@ def get_subscriptions():
         ORDER BY s.created_at DESC
     """, (int(user_id),))
     
-    users = []
+    user_ids = []
     for row in cur.fetchall():
-        users.append({
-            'id': row['id'],
-            'username': row['username'],
-            'avatar': row['avatar'] if row['avatar'] else f"https://api.dicebear.com/7.x/avataaars/svg?seed={row['username']}"
-        })
+        user_ids.append(row['id'])
     
     cur.close()
     conn.close()
     
-    return jsonify({"users": users})
+    return jsonify({"subscribedUserIds": user_ids})
 
 @api.route('/subscribe/<int:target_user_id>', methods=['POST', 'DELETE', 'OPTIONS'])
 def subscribe(target_user_id):
