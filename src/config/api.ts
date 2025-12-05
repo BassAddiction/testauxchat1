@@ -1,5 +1,5 @@
 // API Configuration
-const API_BASE_URL = 'https://auxchat.ru';
+const API_BASE_URL = '';
 
 export const API = {
   // Auth
