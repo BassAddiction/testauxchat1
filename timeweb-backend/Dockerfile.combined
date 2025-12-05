@@ -1,0 +1,35 @@
+# Multi-stage build: Frontend + Backend in one container
+FROM node:20-alpine AS frontend-build
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+FROM python:3.11-slim
+
+# Install nginx and python deps
+RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy backend code
+COPY timeweb-backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY timeweb-backend/*.py .
+
+# Copy frontend build
+COPY --from=frontend-build /app/dist /app/dist
+
+# Copy nginx config
+COPY timeweb-backend/nginx.conf /etc/nginx/sites-available/default
+
+# Startup script
+RUN echo '#!/bin/sh\ngunicorn main:app --bind 127.0.0.1:5000 --workers 2 &\nnginx -g "daemon off;"' > /app/start.sh
+RUN chmod +x /app/start.sh
+
+EXPOSE 8080
+
+CMD ["/app/start.sh"]
