@@ -13,7 +13,10 @@ RUN bun install --frozen-lockfile
 # Копируем весь исходный код
 COPY . .
 
-# Собираем production build
+# Очищаем кеш Vite перед сборкой
+RUN rm -rf node_modules/.vite .vite
+
+# Собираем production build с чистого листа
 RUN bun run build
 
 # DEBUG: Проверим что собралось
