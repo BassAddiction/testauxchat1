@@ -1,24 +1,57 @@
-# Python backend for AuxChat
-FROM python:3.11-slim
+# Multi-stage build для фронтенда AuxChat
+# Stage 1: Build с использованием Bun
+FROM oven/bun:1 AS builder
 
 WORKDIR /app
 
-# Copy requirements first (better Docker caching)
-COPY requirements.txt ./
+# Копируем package.json и lockfile
+COPY package.json bun.lockb* ./
 
-# Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+# Устанавливаем зависимости
+RUN bun install --frozen-lockfile
 
-# Copy application code
-COPY main.py ./
+# Копируем весь исходный код
+COPY . .
 
-# Expose port
-EXPOSE 8080
+# Собираем production build
+RUN bun run build
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')" || exit 1
+# DEBUG: Проверим что собралось
+RUN ls -la /app/dist
 
-# Run application
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--timeout", "120", "main:app"]
+# Stage 2: Production с nginx
+FROM nginx:alpine
+
+# Копируем собранные файлы из builder
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# DEBUG: Проверим что скопировалось
+RUN ls -la /usr/share/nginx/html
+
+# Настраиваем nginx для SPA (чтобы работал React Router)
+RUN echo 'server { \
+    listen 80; \
+    server_name _; \
+    root /usr/share/nginx/html; \
+    index index.html; \
+    \
+    # Кеширование статических файлов \
+    location /assets/ { \
+        expires 1y; \
+        add_header Cache-Control "public, immutable"; \
+    } \
+    \
+    # SPA fallback - все роуты на index.html \
+    location / { \
+        try_files $uri $uri/ /index.html; \
+    } \
+    \
+    # Отключаем кеш для index.html \
+    location = /index.html { \
+        add_header Cache-Control "no-cache, no-store, must-revalidate"; \
+    } \
+}' > /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

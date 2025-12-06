@@ -1,6 +1,5 @@
 {
   "version": 1,
   "framework": "docker",
-  "dockerfile": "Dockerfile.frontend",
   "port": 80
 }
