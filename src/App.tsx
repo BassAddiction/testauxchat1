@@ -1,44 +1,21 @@
-
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import Oferta from "./pages/Oferta";
-import Admin from "./pages/Admin";
-import Profile from "./pages/Profile";
-import Chat from "./pages/Chat";
-import Conversations from "./pages/Conversations";
-import Subscriptions from "./pages/Subscriptions";
-import UserMessages from "./pages/UserMessages";
-import Blacklist from "./pages/Blacklist";
-import NotFound from "./pages/NotFound";
-
-const queryClient = new QueryClient();
-
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/oferta" element={<Oferta />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/profile/:userId" element={<Profile />} />
-          <Route path="/chat/:userId" element={<Chat />} />
-          <Route path="/messages" element={<Conversations />} />
-          <Route path="/subscriptions" element={<Subscriptions />} />
-          <Route path="/user-messages/:userId" element={<UserMessages />} />
-          <Route path="/blacklist" element={<Blacklist />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <div style={{
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '100vh',
+    fontFamily: 'system-ui, -apple-system, sans-serif',
+    background: '#0f172a',
+    color: '#fff',
+    padding: '20px',
+    textAlign: 'center'
+  }}>
+    <div>
+      <h1 style={{ fontSize: '2rem', marginBottom: '1rem' }}>AuxChat</h1>
+      <p style={{ fontSize: '1.2rem', opacity: 0.8 }}>Сайт временно на обновлении</p>
+      <p style={{ fontSize: '0.9rem', opacity: 0.6, marginTop: '1rem' }}>Скоро вернёмся!</p>
+    </div>
+  </div>
 );
 
 export default App;
