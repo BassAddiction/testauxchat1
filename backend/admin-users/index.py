@@ -31,7 +31,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     if method == 'GET':
         cur.execute("""
             SELECT id, phone, username, avatar_url, energy, created_at, is_banned
-            FROM t_p53416936_auxchat_energy_messa.users
+            FROM users
             ORDER BY created_at DESC
         """)
         
@@ -84,24 +84,24 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     if action == 'add_energy':
         amount = body_data.get('amount', 0)
-        cur.execute("UPDATE t_p53416936_auxchat_energy_messa.users SET energy = energy + %s WHERE id = %s", (amount, target_user_id))
+        cur.execute("UPDATE users SET energy = energy + %s WHERE id = %s", (amount, target_user_id))
         conn.commit()
         result = {'message': f"Added {amount} energy", 'success': True}
         
     elif action == 'ban':
-        cur.execute("UPDATE t_p53416936_auxchat_energy_messa.users SET is_banned = TRUE WHERE id = %s", (target_user_id,))
+        cur.execute("UPDATE users SET is_banned = TRUE WHERE id = %s", (target_user_id,))
         conn.commit()
         result = {'message': 'User banned', 'success': True}
         
     elif action == 'unban':
-        cur.execute("UPDATE t_p53416936_auxchat_energy_messa.users SET is_banned = FALSE WHERE id = %s", (target_user_id,))
+        cur.execute("UPDATE users SET is_banned = FALSE WHERE id = %s", (target_user_id,))
         conn.commit()
         result = {'message': 'User unbanned', 'success': True}
         
     elif action == 'delete':
-        cur.execute("DELETE FROM t_p53416936_auxchat_energy_messa.messages WHERE user_id = %s", (target_user_id,))
-        cur.execute("DELETE FROM t_p53416936_auxchat_energy_messa.message_reactions WHERE user_id = %s", (target_user_id,))
-        cur.execute("DELETE FROM t_p53416936_auxchat_energy_messa.users WHERE id = %s", (target_user_id,))
+        cur.execute("DELETE FROM messages WHERE user_id = %s", (target_user_id,))
+        cur.execute("DELETE FROM message_reactions WHERE user_id = %s", (target_user_id,))
+        cur.execute("DELETE FROM users WHERE id = %s", (target_user_id,))
         conn.commit()
         result = {'message': 'User deleted', 'success': True}
         

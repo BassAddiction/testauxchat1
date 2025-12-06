@@ -54,7 +54,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     conn = psycopg2.connect(dsn)
     cur = conn.cursor()
     
-    cur.execute("SELECT id FROM t_p53416936_auxchat_energy_messa.users WHERE phone = %s", (phone,))
+    cur.execute("SELECT id FROM users WHERE phone = %s", (phone,))
     result = cur.fetchone()
     
     if not result:
@@ -70,7 +70,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     password_hash = hashlib.sha256(new_password.encode()).hexdigest()
     
     cur.execute(
-        "UPDATE t_p53416936_auxchat_energy_messa.users SET password_hash = %s WHERE id = %s",
+        "UPDATE users SET password_hash = %s WHERE id = %s",
         (password_hash, user_id)
     )
     

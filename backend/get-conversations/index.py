@@ -57,12 +57,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 ROW_NUMBER() OVER (PARTITION BY 
                     CASE WHEN sender_id = %s THEN receiver_id ELSE sender_id END 
                     ORDER BY created_at DESC) as rn
-            FROM t_p53416936_auxchat_energy_messa.private_messages
+            FROM private_messages
             WHERE sender_id = %s OR receiver_id = %s
         ),
         unread_counts AS (
             SELECT receiver_id, sender_id, COUNT(*) as unread_count
-            FROM t_p53416936_auxchat_energy_messa.private_messages
+            FROM private_messages
             WHERE receiver_id = %s AND is_read = FALSE
             GROUP BY receiver_id, sender_id
         )
@@ -71,7 +71,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             lm.last_message, lm.created_at,
             COALESCE(uc.unread_count, 0) as unread_count
         FROM last_messages lm
-        JOIN t_p53416936_auxchat_energy_messa.users u ON u.id = lm.other_user_id
+        JOIN users u ON u.id = lm.other_user_id
         LEFT JOIN unread_counts uc ON uc.sender_id = u.id
         WHERE lm.rn = 1
         ORDER BY lm.created_at DESC

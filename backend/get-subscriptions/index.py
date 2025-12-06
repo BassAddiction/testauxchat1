@@ -43,7 +43,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     try:
         cur.execute('''
-            SELECT subscribed_to_id FROM t_p53416936_auxchat_energy_messa.subscriptions
+            SELECT subscribed_to_id FROM subscriptions
             WHERE subscriber_id = %s
         ''', (user_id,))
         

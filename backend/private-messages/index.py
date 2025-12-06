@@ -179,7 +179,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             else:
                 escaped_text = text.replace("'", "''")
                 insert_query = f"""
-                    INSERT INTO t_p53416936_auxchat_energy_messa.private_messages 
+                    INSERT INTO private_messages 
                     (sender_id, receiver_id, text) 
                     VALUES ({user_id}, {receiver_id}, '{escaped_text}') 
                     RETURNING id

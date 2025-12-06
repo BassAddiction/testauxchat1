@@ -51,7 +51,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     cur = conn.cursor()
     
     cur.execute(
-        "UPDATE t_p53416936_auxchat_energy_messa.users SET last_activity = CURRENT_TIMESTAMP WHERE id = %s",
+        "UPDATE users SET last_activity = CURRENT_TIMESTAMP WHERE id = %s",
         (user_id,)
     )
     

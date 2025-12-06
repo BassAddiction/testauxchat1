@@ -56,7 +56,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             cur.execute('''
-                SELECT COUNT(*) FROM t_p53416936_auxchat_energy_messa.subscriptions
+                SELECT COUNT(*) FROM subscriptions
                 WHERE subscriber_id = %s AND subscribed_to_id = %s
             ''', (user_id, int(target_user_id)))
             
@@ -88,7 +88,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             cur.execute('''
-                INSERT INTO t_p53416936_auxchat_energy_messa.subscriptions (subscriber_id, subscribed_to_id)
+                INSERT INTO subscriptions (subscriber_id, subscribed_to_id)
                 VALUES (%s, %s)
                 ON CONFLICT (subscriber_id, subscribed_to_id) DO NOTHING
             ''', (user_id, int(target_user_id)))
@@ -112,7 +112,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             cur.execute('''
-                DELETE FROM t_p53416936_auxchat_energy_messa.subscriptions
+                DELETE FROM subscriptions
                 WHERE subscriber_id = %s AND subscribed_to_id = %s
             ''', (user_id, int(target_user_id)))
             
