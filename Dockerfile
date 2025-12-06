@@ -13,8 +13,11 @@ RUN bun install --frozen-lockfile
 # Копируем весь исходный код
 COPY . .
 
-# Очищаем кеш Vite перед сборкой
-RUN rm -rf node_modules/.vite .vite
+# ЖЁСТКАЯ очистка всех кешей
+RUN rm -rf node_modules/.vite .vite dist node_modules/.cache
+
+# Пересобираем зависимости без кеша
+RUN bun install --frozen-lockfile --force
 
 # Собираем production build с чистого листа
 RUN bun run build
