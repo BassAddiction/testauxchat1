@@ -16,11 +16,17 @@ COPY . .
 # Собираем production build
 RUN bun run build
 
+# DEBUG: Проверим что собралось
+RUN ls -la /app/dist
+
 # Stage 2: Production с nginx
 FROM nginx:alpine
 
 # Копируем собранные файлы из builder
 COPY --from=builder /app/dist /usr/share/nginx/html
+
+# DEBUG: Проверим что скопировалось
+RUN ls -la /usr/share/nginx/html
 
 # Настраиваем nginx для SPA (чтобы работал React Router)
 RUN echo 'server { \
