@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import "./lib/fetch-interceptor"; // Redirect legacy URLs to Yandex Cloud
+import { INTERCEPTOR_ACTIVE } from "./lib/fetch-interceptor"; // Redirect legacy URLs to Yandex Cloud
 import Index from "./pages/Index";
 import Oferta from "./pages/Oferta";
 import Admin from "./pages/Admin";
@@ -16,6 +16,9 @@ import Blacklist from "./pages/Blacklist";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
+
+// Ensure interceptor is loaded
+console.log('[App.tsx] Fetch interceptor loaded:', INTERCEPTOR_ACTIVE);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

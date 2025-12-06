@@ -19,7 +19,7 @@ const LEGACY_TO_NEW: Record<string, string> = {
   'ac3ea823-b6ec-4987-9602': FUNCTIONS.subscribe,
 };
 
-// Patch global fetch
+// Patch global fetch - MUST run immediately on import
 const originalFetch = window.fetch;
 window.fetch = function(input: RequestInfo | URL, init?: RequestInit) {
   let url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
@@ -42,3 +42,6 @@ window.fetch = function(input: RequestInfo | URL, init?: RequestInit) {
 };
 
 console.log('[FETCH INTERCEPTOR] Initialized - redirecting legacy poehali.dev URLs to Yandex Cloud');
+
+// Export to prevent tree-shaking
+export const INTERCEPTOR_ACTIVE = true;
