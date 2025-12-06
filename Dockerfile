@@ -26,7 +26,7 @@ RUN bun install --frozen-lockfile --force
 RUN bun run build
 
 # DEBUG: Проверим содержимое собранного JS (должны быть yandexcloud.net URLs)
-RUN echo "=== CHECKING BUILT JS FILES ===" && grep -r "yandexcloud.net" dist/ || echo "WARNING: NO YANDEXCLOUD URLS FOUND"
+RUN echo "=== CHECKING BUILT JS FILES ===" && grep -o "functions\.[a-z]*\.dev" dist/assets/*.js | head -20 || echo "NO FUNCTION URLS FOUND"
 
 # DEBUG: Проверим что собралось
 RUN ls -la /app/dist
