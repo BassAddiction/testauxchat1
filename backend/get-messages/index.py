@@ -80,7 +80,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     cur.execute(f"""
         SELECT DISTINCT ON (user_id) user_id, photo_url
-        FROM t_p53416936_auxchat_energy_messa.user_photos
+        FROM user_photos
         WHERE user_id IN ({','.join(map(str, user_ids))})
         ORDER BY user_id, display_order ASC, created_at DESC
     """)
