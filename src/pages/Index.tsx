@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import Icon from "@/components/ui/icon";
+import { api } from "@/lib/api";
 
 interface Message {
   id: number;
@@ -114,16 +115,8 @@ const Index = () => {
   const loadUnreadCount = async () => {
     if (!userId) return;
     try {
-      const response = await fetch(
-        'https://functions.poehali.dev/aea3125a-7d11-4637-af71-0998dfbaf5b2',
-        {
-          headers: {
-            'X-User-Id': userId.toString()
-          }
-        }
-      );
-      const data = await response.json();
-      const total = (data.conversations || []).reduce((sum: number, conv: any) => sum + (conv.unreadCount || 0), 0);
+      const data = await api.getUnreadCount(userId.toString());
+      const total = data.unreadCount || 0;
       
       // Инициализируем счётчик при первой загрузке
       if (prevUnreadRef.current === 0) {
@@ -142,25 +135,7 @@ const Index = () => {
 
   const loadMessages = async (retryCount = 0) => {
     try {
-      const response = await fetch(
-        "https://functions.poehali.dev/392f3078-9f28-4640-ab86-dcabecaf721a?limit=20&offset=0",
-        {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-          },
-        }
-      );
-      
-      if (!response.ok) {
-        console.error("Response not OK:", response.status, response.statusText);
-        if (retryCount < 2) {
-          setTimeout(() => loadMessages(retryCount + 1), 1000);
-        }
-        return;
-      }
-      
-      const data = await response.json();
+      const data = await api.getMessages(20, 0);
       if (data.messages) {
         const formattedMessages: Message[] = data.messages.map((msg: any) => ({
           id: msg.id,
@@ -183,18 +158,9 @@ const Index = () => {
 
   const loadUser = async (id: number) => {
     try {
-      const response = await fetch(
-        `https://functions.poehali.dev/518f730f-1a8e-45ad-b0ed-e9a66c5a3784?user_id=${id}`
-      );
-      const data = await response.json();
-      if (response.ok) {
-        const photosResponse = await fetch(
-          `https://functions.poehali.dev/6ab5e5ca-f93c-438c-bc46-7eb7a75e2734?userId=${id}`,
-          {
-            headers: { 'X-User-Id': id.toString() }
-          }
-        );
-        const photosData = await photosResponse.json();
+      const data = await api.getUser(id.toString());
+      if (data.username) {
+        const photosData = await api.getProfilePhotos(id.toString());
         const userAvatar = photosData.photos && photosData.photos.length > 0 
           ? photosData.photos[0].url 
           : `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.username}`;
@@ -217,13 +183,7 @@ const Index = () => {
   const loadSubscribedUsers = async () => {
     if (!userId) return;
     try {
-      const response = await fetch(
-        'https://functions.poehali.dev/ac3ea823-b6ec-4987-9602-18e412db6458',
-        {
-          headers: { 'X-User-Id': userId.toString() }
-        }
-      );
-      const data = await response.json();
+      const data = await api.getSubscriptions(userId.toString());
       setSubscribedUsers(new Set(data.subscribedUserIds || []));
     } catch (error) {
       console.error('Load subscribed users error:', error);
@@ -233,10 +193,7 @@ const Index = () => {
   const updateActivity = async () => {
     if (!userId) return;
     try {
-      await fetch('https://functions.poehali.dev/a70b420b-cb23-4948-9a56-b8cefc96f976', {
-        method: 'POST',
-        headers: { 'X-User-Id': userId.toString() }
-      });
+      await api.updateActivity(userId.toString());
     } catch (error) {
       console.error('Error updating activity:', error);
     }
@@ -279,15 +236,7 @@ const Index = () => {
     }
 
     try {
-      const response = await fetch(
-        "https://functions.poehali.dev/57bd04c8-4731-4857-a2b8-a71c6bda783a",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone, password }),
-        }
-      );
-      const data = await response.json();
+      const data = await api.login(phone, password);
       
       if (response.ok) {
         setUser({
@@ -317,17 +266,9 @@ const Index = () => {
     }
 
     try {
-      const response = await fetch(
-        "https://functions.poehali.dev/39b076de-8be1-48c0-8684-f94df4548b91",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone }),
-        }
-      );
-      const data = await response.json();
+      const data = await api.sendSMS(phone);
       
-      if (response.ok) {
+      if (data.success) {
         setSmsStep("code");
         alert("SMS-код отправлен на ваш телефон!");
       } else {
@@ -346,17 +287,9 @@ const Index = () => {
     }
 
     try {
-      const response = await fetch(
-        "https://functions.poehali.dev/c4359550-f604-4126-8e72-5087a670b7cb",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone, code: smsCode }),
-        }
-      );
-      const data = await response.json();
+      const data = await api.verifySMS(phone, smsCode);
       
-      if (response.ok) {
+      if (data.success) {
         setSmsStep("password");
         setSmsCode("");
       } else {
