@@ -53,7 +53,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     conn = psycopg2.connect(dsn)
     cur = conn.cursor()
     
-    cur.execute("SELECT energy, is_banned FROM t_p53416936_auxchat_energy_messa.users WHERE id = %s", (user_id,))
+    cur.execute("SELECT energy, is_banned FROM users WHERE id = %s", (user_id,))
     user_data = cur.fetchone()
     
     if not user_data:
@@ -87,12 +87,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     cur.execute(
-        "UPDATE t_p53416936_auxchat_energy_messa.users SET energy = energy - 10, last_activity = CURRENT_TIMESTAMP WHERE id = %s", 
+        "UPDATE users SET energy = energy - 10, last_activity = CURRENT_TIMESTAMP WHERE id = %s", 
         (user_id,)
     )
     
     cur.execute(
-        "INSERT INTO t_p53416936_auxchat_energy_messa.messages (user_id, text) VALUES (%s, %s) RETURNING id, created_at",
+        "INSERT INTO messages (user_id, text) VALUES (%s, %s) RETURNING id, created_at",
         (user_id, text)
     )
     message_id, created_at = cur.fetchone()

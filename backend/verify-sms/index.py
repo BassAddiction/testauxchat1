@@ -97,7 +97,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     cur.execute("UPDATE sms_codes SET verified = TRUE WHERE id = %s", (code_id,))
     
     # Проверяем, есть ли пользователь с таким телефоном
-    cur.execute("SELECT id FROM t_p53416936_auxchat_energy_messa.users WHERE phone = %s", (phone,))
+    cur.execute("SELECT id FROM users WHERE phone = %s", (phone,))
     user_row = cur.fetchone()
     
     user_id = None

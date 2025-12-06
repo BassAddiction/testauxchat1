@@ -43,8 +43,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         SELECT 
             m.id, m.text, m.created_at,
             u.id, u.username
-        FROM t_p53416936_auxchat_energy_messa.messages m
-        JOIN t_p53416936_auxchat_energy_messa.users u ON m.user_id = u.id
+        FROM messages m
+        JOIN users u ON m.user_id = u.id
         ORDER BY m.created_at DESC
         LIMIT {limit} OFFSET {offset}
     """)
@@ -66,7 +66,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     cur.execute(f"""
         SELECT message_id, emoji, COUNT(*) as count
-        FROM t_p53416936_auxchat_energy_messa.message_reactions
+        FROM message_reactions
         WHERE message_id IN ({','.join(map(str, message_ids))})
         GROUP BY message_id, emoji
     """)

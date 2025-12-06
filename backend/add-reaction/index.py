@@ -48,20 +48,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     cur = conn.cursor()
     
     cur.execute(
-        "SELECT id FROM t_p53416936_auxchat_energy_messa.message_reactions WHERE message_id = %s AND user_id = %s AND emoji = %s",
+        "SELECT id FROM message_reactions WHERE message_id = %s AND user_id = %s AND emoji = %s",
         (message_id, user_id, emoji)
     )
     existing = cur.fetchone()
     
     if existing:
         cur.execute(
-            "DELETE FROM t_p53416936_auxchat_energy_messa.message_reactions WHERE id = %s",
+            "DELETE FROM message_reactions WHERE id = %s",
             (existing[0],)
         )
         action = 'removed'
     else:
         cur.execute(
-            "INSERT INTO t_p53416936_auxchat_energy_messa.message_reactions (message_id, user_id, emoji) VALUES (%s, %s, %s)",
+            "INSERT INTO message_reactions (message_id, user_id, emoji) VALUES (%s, %s, %s)",
             (message_id, user_id, emoji)
         )
         action = 'added'

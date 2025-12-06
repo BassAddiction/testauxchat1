@@ -46,7 +46,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     cur = conn.cursor()
     
     cur.execute(
-        "SELECT id, phone, username, avatar_url, energy, is_banned, bio, last_activity FROM t_p53416936_auxchat_energy_messa.users WHERE id = %s",
+        "SELECT id, phone, username, avatar_url, energy, is_banned, bio, last_activity FROM users WHERE id = %s",
         (user_id,)
     )
     row = cur.fetchone()

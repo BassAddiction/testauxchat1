@@ -69,8 +69,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             query = f"""
                 SELECT pm.id, pm.sender_id, pm.receiver_id, pm.text, pm.is_read, pm.created_at,
                        u.username, NULL as avatar_url, pm.voice_url, pm.voice_duration
-                FROM t_p53416936_auxchat_energy_messa.private_messages pm
-                JOIN t_p53416936_auxchat_energy_messa.users u ON u.id = pm.sender_id
+                FROM private_messages pm
+                JOIN users u ON u.id = pm.sender_id
                 WHERE (pm.sender_id = {user_id} AND pm.receiver_id = {other_user_id}) 
                    OR (pm.sender_id = {other_user_id} AND pm.receiver_id = {user_id})
                 ORDER BY pm.created_at ASC
@@ -106,7 +106,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             print(f'Prepared {len(messages)} messages for response')
             
             update_query = f"""
-                UPDATE t_p53416936_auxchat_energy_messa.private_messages 
+                UPDATE private_messages 
                 SET is_read = TRUE 
                 WHERE receiver_id = {user_id} AND sender_id = {other_user_id} AND is_read = FALSE
             """
@@ -142,7 +142,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             # Проверяем блокировку в обе стороны
             block_check_query = f"""
-                SELECT COUNT(*) FROM t_p53416936_auxchat_energy_messa.blacklist
+                SELECT COUNT(*) FROM blacklist
                 WHERE (user_id = {user_id} AND blocked_user_id = {receiver_id})
                    OR (user_id = {receiver_id} AND blocked_user_id = {user_id})
             """
@@ -164,14 +164,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 if text:
                     escaped_text = text.replace("'", "''")
                     insert_query = f"""
-                        INSERT INTO t_p53416936_auxchat_energy_messa.private_messages 
+                        INSERT INTO private_messages 
                         (sender_id, receiver_id, text, voice_url, voice_duration) 
                         VALUES ({user_id}, {receiver_id}, '{escaped_text}', '{escaped_voice_url}', {voice_duration if voice_duration else 'NULL'}) 
                         RETURNING id
                     """
                 else:
                     insert_query = f"""
-                        INSERT INTO t_p53416936_auxchat_energy_messa.private_messages 
+                        INSERT INTO private_messages 
                         (sender_id, receiver_id, text, voice_url, voice_duration) 
                         VALUES ({user_id}, {receiver_id}, '', '{escaped_voice_url}', {voice_duration if voice_duration else 'NULL'}) 
                         RETURNING id
@@ -189,7 +189,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             # Обновляем last_activity отправителя
             cur.execute(
-                "UPDATE t_p53416936_auxchat_energy_messa.users SET last_activity = CURRENT_TIMESTAMP WHERE id = %s",
+                "UPDATE users SET last_activity = CURRENT_TIMESTAMP WHERE id = %s",
                 (user_id,)
             )
             

@@ -47,7 +47,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     cur = conn.cursor()
     
     cur.execute(
-        "UPDATE t_p53416936_auxchat_energy_messa.users SET energy = energy + %s WHERE id = %s RETURNING energy",
+        "UPDATE users SET energy = energy + %s WHERE id = %s RETURNING energy",
         (amount, user_id)
     )
     result = cur.fetchone()
