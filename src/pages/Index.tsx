@@ -595,20 +595,20 @@ const Index = () => {
 
     if (messageText.trim()) {
       try {
-        const response = await fetch(
-          "https://functions.poehali.dev/8d34c54f-b2de-42c1-ac0c-9f6ecf5e16f6",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              user_id: userId,
-              text: messageText.trim(),
-            }),
-          }
-        );
-        const data = await response.json();
+        const data = await api.sendMessage(userId.toString(), 0, messageText.trim());
         
-        if (response.ok) {
+        if (data.error) {
+          if (data.error.includes('banned')) {
+            alert("Вы заблокированы и не можете отправлять сообщения");
+            handleLogout();
+          } else {
+            alert(data.error);
+          }
+          return;
+        }
+        
+        // Success - play sound
+        if (data) {
           try {
             const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
             const oscillator = audioContext.createOscillator();
@@ -633,13 +633,6 @@ const Index = () => {
           loadMessages();
           if (data.energy !== undefined) {
             setUser({ ...user, energy: data.energy });
-          }
-        } else {
-          if (response.status === 403 && data.error?.includes('banned')) {
-            alert("Вы заблокированы и не можете отправлять сообщения");
-            handleLogout();
-          } else {
-            alert(data.error || "Ошибка отправки");
           }
         }
       } catch (error) {
