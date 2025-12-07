@@ -18,14 +18,20 @@
     <meta property="og:image" content="https://cdn.poehali.dev/intertnal/img/og.png">
     <meta name="twitter:image" content="https://cdn.poehali.dev/intertnal/img/og.png">
       <meta name="pp-name" value="auxchat-energy-messages">
-      <script src="https://cdn.poehali.dev/intertnal/js/pp-min-2.js"></script>
       <script src="https://cdn.poehali.dev/intertnal/js/route-min.js"></script>
       <script src="https://cdn.poehali.dev/intertnal/js/inspector-min.js"></script>
       <script src="https://cdn.poehali.dev/intertnal/js/telemetry-min.js"></script>
+      <script src="https://cdn.poehali.dev/intertnal/js/pp-min-2.js"></script>
   </head>
 
 <body>
 <div id="root"></div>
+
+<script>
+// Отключаем перехват file inputs от pp-min-2.js
+window.DISABLE_PP_FILE_UPLOAD = true;
+</script>
+
 <script type="module" src="/src/main.tsx"></script>
 
 <!-- Yandex.Metrika counter -->
