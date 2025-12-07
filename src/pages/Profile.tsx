@@ -185,7 +185,7 @@ export default function Profile() {
     try {
       if (isBlocked) {
         const response = await fetch(
-          `https://functions.poehali.dev/7d7db6d4-88e3-4f83-8ad5-9fc30ccfd5bf?blockedUserId=${userId}`,
+          `${FUNCTIONS.blacklist}?targetUserId=${userId}`,
           {
             method: 'DELETE',
             headers: { 'X-User-Id': currentUserId || '0' }
@@ -197,14 +197,14 @@ export default function Profile() {
         }
       } else {
         const response = await fetch(
-          'https://functions.poehali.dev/7d7db6d4-88e3-4f83-8ad5-9fc30ccfd5bf',
+          FUNCTIONS.blacklist,
           {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'X-User-Id': currentUserId || '0'
             },
-            body: JSON.stringify({ blockedUserId: Number(userId) })
+            body: JSON.stringify({ user_id: Number(userId) })
           }
         );
         if (response.ok) {
