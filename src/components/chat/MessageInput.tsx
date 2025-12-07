@@ -57,10 +57,11 @@ export default function MessageInput({
       const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
       
       // Upload через бэкенд (обход CORS)
-      const uploadResponse = await fetch(API.uploadUrl, {
-        method: 'POST',
-        body: JSON.stringify({ audioData: base64 }),
-        headers: { 'Content-Type': 'application/json' }
+      const uploadData = await api.getUploadUrl('audio/webm', 'webm');
+      const uploadResponse = await fetch(uploadData.uploadUrl, {
+        method: 'PUT',
+        body: audioBlob,
+        headers: { 'Content-Type': 'audio/webm' }
       });
 
       if (!uploadResponse.ok) {
@@ -68,8 +69,12 @@ export default function MessageInput({
         return;
       }
 
-      const { fileUrl } = await uploadResponse.json();
-      await sendMessage(fileUrl, recordingTime);
+      if (!uploadResponse.ok) {
+        toast.error('Ошибка загрузки файла');
+        return;
+      }
+      
+      await sendMessage(uploadData.fileUrl, recordingTime);
     } catch (error) {
       console.error('Error uploading voice:', error);
       toast.error('Ошибка загрузки голосового сообщения');
