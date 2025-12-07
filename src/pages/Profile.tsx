@@ -260,6 +260,7 @@ export default function Profile() {
 
     setUploadingFile(true);
     try {
+      console.log('1. Reading file...');
       const reader = new FileReader();
       
       const imageBase64 = await new Promise<string>((resolve, reject) => {
@@ -271,6 +272,7 @@ export default function Profile() {
         reader.readAsDataURL(file);
       });
 
+      console.log('2. File read, uploading to S3...');
       const uploadResponse = await fetch(FUNCTIONS['generate-upload-url'], {
         method: 'POST',
         headers: {
@@ -282,14 +284,18 @@ export default function Profile() {
         })
       });
 
+      console.log('3. Upload response:', uploadResponse.status);
       if (!uploadResponse.ok) {
+        const errorText = await uploadResponse.text();
+        console.error('Upload error:', errorText);
         toast.error('Ошибка загрузки фото');
-        setUploadingFile(false);
         return;
       }
 
       const { fileUrl } = await uploadResponse.json();
+      console.log('4. Got fileUrl:', fileUrl);
 
+      console.log('5. Saving to database...');
       const addPhotoResponse = await fetch(FUNCTIONS['profile-photos'], {
         method: 'POST',
         headers: {
@@ -299,15 +305,18 @@ export default function Profile() {
         body: JSON.stringify({ photoUrl: fileUrl })
       });
 
+      console.log('6. Save response:', addPhotoResponse.status);
       if (addPhotoResponse.ok) {
         toast.success('Фото добавлено');
         loadPhotos();
       } else {
         const error = await addPhotoResponse.json();
+        console.error('Save error:', error);
         toast.error(error.error || 'Ошибка добавления фото');
       }
     } catch (error) {
-      toast.error('Ошибка загрузки фото');
+      console.error('Upload failed:', error);
+      toast.error(`Ошибка загрузки: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
     } finally {
       setUploadingFile(false);
     }
