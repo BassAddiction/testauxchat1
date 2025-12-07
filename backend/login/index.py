@@ -11,6 +11,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
           context with request_id
     Returns: HTTP response with user data and session
     '''
+    print(f"[LOGIN] Received request: {event.get('httpMethod', 'GET')}")
     method: str = event.get('httpMethod', 'GET')
     
     if method == 'OPTIONS':
