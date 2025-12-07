@@ -801,8 +801,8 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex flex-col">
-      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 px-2 md:px-3 py-2 flex justify-between items-center sticky top-0 z-10">
+    <div className="h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex flex-col overflow-hidden">
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 px-2 md:px-3 py-2 flex justify-between items-center flex-shrink-0 z-10">
         <div className="flex items-center gap-1.5 md:gap-2">
           <Icon name="MessageCircle" className="text-red-500" size={20} />
           <h1 className="text-lg md:text-xl font-bold text-red-500">AuxChat</h1>
@@ -1254,9 +1254,9 @@ const Index = () => {
         </div>
       </header>
 
-      <main className="flex-1 container mx-auto max-w-4xl p-2 md:p-4 flex flex-col overflow-hidden">
-        <Card className="flex-1 flex flex-col shadow-lg">
-          <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-2 md:space-y-4">
+      <main className="flex-1 container mx-auto max-w-4xl p-2 md:p-4 flex flex-col overflow-hidden min-h-0">
+        <Card className="flex-1 flex flex-col shadow-lg min-h-0">
+          <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-2 md:space-y-4 overscroll-contain">
             {displayLimit < messages.length && (
               <div className="text-center pb-2">
                 <Button
