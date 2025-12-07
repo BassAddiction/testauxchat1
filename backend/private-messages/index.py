@@ -42,7 +42,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         user_id = int(user_id_str)
         print(f'User ID: {user_id}')
-        dsn = os.environ.get('DATABASE_URL')
+        dsn = os.environ.get('TIMEWEB_DB_URL')
         print(f'Connecting to DB...')
         
         conn = psycopg2.connect(dsn)

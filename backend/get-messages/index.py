@@ -37,7 +37,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     limit = int(params.get('limit', 20))
     offset = int(params.get('offset', 0))
     
-    dsn = os.environ.get('DATABASE_URL')
+    dsn = os.environ.get('TIMEWEB_DB_URL')
     conn = psycopg2.connect(dsn)
     cur = conn.cursor()
     

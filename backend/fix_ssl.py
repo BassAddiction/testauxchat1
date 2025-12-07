@@ -31,18 +31,18 @@ for func in functions_with_db:
     with open(index_path, 'r', encoding='utf-8') as f:
         content = f.read()
     
-    # Ищем строку: dsn = os.environ.get('DATABASE_URL')
-    # Заменяем на: dsn = os.environ.get('DATABASE_URL') + '?sslmode=disable'
+    # Ищем строку: dsn = os.environ.get('TIMEWEB_DB_URL')
+    # Заменяем на: dsn = os.environ.get('TIMEWEB_DB_URL') + '?sslmode=disable'
     
-    if "dsn = os.environ.get('DATABASE_URL')" in content:
+    if "dsn = os.environ.get('TIMEWEB_DB_URL')" in content:
         # Убираем старый sslmode если есть
         content = content.replace("+ '?sslmode=require'", "")
         
         # Добавляем новый
         if '?sslmode=disable' not in content:
             content = content.replace(
-                "dsn = os.environ.get('DATABASE_URL')",
-                "dsn = os.environ.get('DATABASE_URL') + '?sslmode=disable'"
+                "dsn = os.environ.get('TIMEWEB_DB_URL')",
+                "dsn = os.environ.get('TIMEWEB_DB_URL') + '?sslmode=disable'"
             )
             
             with open(index_path, 'w', encoding='utf-8') as f:
@@ -52,6 +52,6 @@ for func in functions_with_db:
         else:
             print(f'⏭️  Skipped {func} (already fixed)')
     else:
-        print(f'⚠️  Skipped {func} (no DATABASE_URL found)')
+        print(f'⚠️  Skipped {func} (no TIMEWEB_DB_URL found)')
 
 print('\n✅ All functions fixed!')

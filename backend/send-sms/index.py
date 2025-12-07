@@ -64,7 +64,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         code = str(random.randint(1000, 9999))
     
     # Сохраняем в БД
-    dsn = os.environ.get('DATABASE_URL')
+    dsn = os.environ.get('TIMEWEB_DB_URL')
     conn = psycopg2.connect(dsn)
     cur = conn.cursor()
     
