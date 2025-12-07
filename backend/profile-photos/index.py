@@ -14,14 +14,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     if method == 'OPTIONS':
         return {
-            'statusCode': 200,
+            'statusCode': 204,
             'headers': {
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type, X-User-Id',
                 'Access-Control-Max-Age': '86400'
             },
-            'body': ''
+            'body': '',
+            'isBase64Encoded': False
         }
     
     headers = event.get('headers', {})
@@ -31,7 +32,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return {
             'statusCode': 401,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'X-User-Id header required'})
+            'body': json.dumps({'error': 'X-User-Id header required'}),
+            'isBase64Encoded': False
         }
     
     user_id = int(user_id_str)
@@ -60,7 +62,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return {
             'statusCode': 200,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'photos': photos})
+            'body': json.dumps({'photos': photos}),
+            'isBase64Encoded': False
         }
     
     if method == 'POST':
@@ -73,7 +76,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return {
                 'statusCode': 400,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'photoUrl required'})
+                'body': json.dumps({'error': 'photoUrl required'}),
+                'isBase64Encoded': False
             }
         
         cur.execute(
@@ -87,7 +91,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return {
                 'statusCode': 400,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'Maximum 6 photos allowed'})
+                'body': json.dumps({'error': 'Maximum 6 photos allowed'}),
+                'isBase64Encoded': False
             }
         
         photo_url_escaped = photo_url.replace("'", "''")
@@ -102,7 +107,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return {
             'statusCode': 200,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'success': True, 'photoId': photo_id})
+            'body': json.dumps({'success': True, 'photoId': photo_id}),
+            'isBase64Encoded': False
         }
     
     if method == 'PUT':
@@ -116,7 +122,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return {
                 'statusCode': 400,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'photoId and action=set_main required'})
+                'body': json.dumps({'error': 'photoId and action=set_main required'}),
+                'isBase64Encoded': False
             }
         
         cur.execute(
@@ -134,7 +141,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return {
             'statusCode': 200,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'success': True})
+            'body': json.dumps({'success': True}),
+            'isBase64Encoded': False
         }
     
     if method == 'DELETE':
@@ -147,7 +155,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return {
                 'statusCode': 400,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'photoId required'})
+                'body': json.dumps({'error': 'photoId required'}),
+                'isBase64Encoded': False
             }
         
         photo_id = int(photo_id_str)
@@ -164,13 +173,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return {
                 'statusCode': 404,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'Photo not found'})
+                'body': json.dumps({'error': 'Photo not found'}),
+                'isBase64Encoded': False
             }
         
         return {
             'statusCode': 200,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'success': True})
+            'body': json.dumps({'success': True}),
+            'isBase64Encoded': False
         }
     
     cur.close()
@@ -178,5 +189,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     return {
         'statusCode': 405,
         'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-        'body': json.dumps({'error': 'Method not allowed'})
+        'body': json.dumps({'error': 'Method not allowed'}),
+        'isBase64Encoded': False
     }
