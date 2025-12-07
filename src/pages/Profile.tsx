@@ -450,6 +450,9 @@ export default function Profile() {
                         src={photo.url}
                         alt="User photo"
                         className="w-full h-full object-cover rounded-md md:rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
+                        onError={(e) => {
+                          e.currentTarget.src = `https://api.dicebear.com/7.x/shapes/svg?seed=${photo.id}`;
+                        }}
                       />
                     </button>
                     {isOwnProfile && (
