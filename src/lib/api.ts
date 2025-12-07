@@ -18,7 +18,7 @@ export const api = {
     const res = await fetch(FUNCTIONS.login, {
       method: 'POST',
       headers: this.headers(),
-      body: JSON.stringify({ username: phone, password }),
+      body: JSON.stringify({ phone, password }),
     });
     return res.json();
   },
