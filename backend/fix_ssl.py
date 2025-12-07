@@ -32,14 +32,17 @@ for func in functions_with_db:
         content = f.read()
     
     # Ищем строку: dsn = os.environ.get('DATABASE_URL')
-    # Заменяем на: dsn = os.environ.get('DATABASE_URL') + '?sslmode=require'
+    # Заменяем на: dsn = os.environ.get('DATABASE_URL') + '?sslmode=disable'
     
     if "dsn = os.environ.get('DATABASE_URL')" in content:
-        # Проверяем что sslmode еще не добавлен
-        if '?sslmode=require' not in content:
+        # Убираем старый sslmode если есть
+        content = content.replace("+ '?sslmode=require'", "")
+        
+        # Добавляем новый
+        if '?sslmode=disable' not in content:
             content = content.replace(
                 "dsn = os.environ.get('DATABASE_URL')",
-                "dsn = os.environ.get('DATABASE_URL') + '?sslmode=require'"
+                "dsn = os.environ.get('DATABASE_URL') + '?sslmode=disable'"
             )
             
             with open(index_path, 'w', encoding='utf-8') as f:
