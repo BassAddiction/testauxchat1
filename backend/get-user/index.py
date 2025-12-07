@@ -31,8 +31,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'Method not allowed'})
         }
     
+    # Получаем user_id из query параметров или из заголовка X-User-Id
     params = event.get('queryStringParameters') or {}
-    user_id = params.get('user_id')
+    headers = event.get('headers') or {}
+    user_id = params.get('user_id') or headers.get('X-User-Id') or headers.get('x-user-id')
     
     if not user_id:
         return {
