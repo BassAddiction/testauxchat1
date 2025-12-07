@@ -259,6 +259,8 @@ export default function Profile() {
     }
 
     setUploadingFile(true);
+    console.log('START: uploadingFile = true');
+    
     try {
       console.log('1. Reading file...');
       const reader = new FileReader();
@@ -289,7 +291,7 @@ export default function Profile() {
         const errorText = await uploadResponse.text();
         console.error('Upload error:', errorText);
         toast.error('Ошибка загрузки фото');
-        return;
+        throw new Error('Upload failed');
       }
 
       const { fileUrl } = await uploadResponse.json();
@@ -318,7 +320,10 @@ export default function Profile() {
       console.error('Upload failed:', error);
       toast.error(`Ошибка загрузки: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
     } finally {
+      console.log('FINALLY: setting uploadingFile = false');
       setUploadingFile(false);
+      // Сбросить input для возможности повторной загрузки того же файла
+      e.target.value = '';
     }
   };
 
