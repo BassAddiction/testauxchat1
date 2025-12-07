@@ -277,6 +277,10 @@ export default function Profile() {
       });
 
       console.log('2. File read, uploading to S3...');
+      console.log('   URL:', FUNCTIONS['generate-upload-url']);
+      console.log('   Content-Type:', file.type);
+      console.log('   Base64 length:', imageBase64.length);
+      
       const uploadResponse = await fetch(FUNCTIONS['generate-upload-url'], {
         method: 'POST',
         headers: {
@@ -288,11 +292,17 @@ export default function Profile() {
         })
       });
 
-      console.log('3. Upload response:', uploadResponse.status);
+      console.log('3. Upload response:', uploadResponse.status, uploadResponse.statusText);
+      console.log('   Response headers:', Object.fromEntries(uploadResponse.headers.entries()));
+      
       if (!uploadResponse.ok) {
         const errorText = await uploadResponse.text();
-        console.error('Upload error:', errorText);
-        toast.error('Ошибка загрузки фото');
+        console.error('Upload error details:', {
+          status: uploadResponse.status,
+          statusText: uploadResponse.statusText,
+          body: errorText
+        });
+        toast.error(`Ошибка загрузки: ${uploadResponse.status} ${errorText}`);
         throw new Error('Upload failed');
       }
 
