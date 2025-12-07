@@ -37,7 +37,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     user_id = int(user_id_str)
-    dsn = os.environ.get('DATABASE_URL')
+    dsn = os.environ.get('DATABASE_URL') + '?sslmode=disable'
     
     conn = psycopg2.connect(dsn)
     cur = conn.cursor()

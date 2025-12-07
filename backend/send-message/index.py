@@ -53,7 +53,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'isBase64Encoded': False
         }
     
-    dsn = os.environ.get('DATABASE_URL')
+    dsn = os.environ.get('DATABASE_URL') + '?sslmode=disable'
     conn = psycopg2.connect(dsn)
     cur = conn.cursor()
     
