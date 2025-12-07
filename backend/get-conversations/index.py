@@ -47,6 +47,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     user_id = int(user_id_str)
     dsn = os.environ.get('TIMEWEB_DB_URL')
+    print(f'[DEBUG] DSN format check: {dsn[:30] if dsn else "DSN is None"}...')
+    
+    if not dsn or not dsn.startswith('postgresql://'):
+        return {
+            'statusCode': 500,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'isBase64Encoded': False,
+            'body': json.dumps({'error': 'TIMEWEB_DB_URL не установлен или неправильный формат. Ожидается: postgresql://user:pass@host:port/db'})
+        }
     
     conn = psycopg2.connect(dsn)
     cur = conn.cursor()
