@@ -424,10 +424,19 @@ export default function Profile() {
                   disabled={uploadingFile}
                   id="photo-upload"
                 />
-                <Button 
+                <button 
                   disabled={uploadingFile}
-                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90 h-9 md:h-10 text-sm"
-                  onClick={() => document.getElementById('photo-upload')?.click()}
+                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90 h-9 md:h-10 text-sm rounded-md font-medium flex items-center justify-center disabled:opacity-50"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    console.log('Button clicked!');
+                    const input = document.getElementById('photo-upload') as HTMLInputElement;
+                    console.log('Input element:', input);
+                    if (input) {
+                      input.click();
+                      console.log('Input.click() called');
+                    }
+                  }}
                 >
                   {uploadingFile ? (
                     <>
@@ -440,7 +449,7 @@ export default function Profile() {
                       <span className="text-xs md:text-sm">Загрузить фото</span>
                     </>
                   )}
-                </Button>
+                </button>
               </div>
             )}
 
