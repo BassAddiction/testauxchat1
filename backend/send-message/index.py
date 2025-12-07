@@ -14,7 +14,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     if method == 'OPTIONS':
         return {
-            'statusCode': 200,
+            'statusCode': 204,
             'headers': {
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'POST, OPTIONS',
