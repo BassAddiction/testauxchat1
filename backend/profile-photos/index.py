@@ -68,7 +68,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     if method == 'POST':
         body_data = json.loads(event.get('body', '{}'))
-        photo_url = body_data.get('photoUrl', '').strip()
+        photo_url = body_data.get('photo_url', body_data.get('photoUrl', '')).strip()
         
         if not photo_url:
             cur.close()
