@@ -53,6 +53,11 @@ export default function MessageInput({
   };
 
   const uploadVoiceMessage = async (audioBlob: Blob) => {
+    if (!currentUserId) {
+      toast.error('Необходимо войти в систему');
+      return;
+    }
+    
     try {
       const arrayBuffer = await audioBlob.arrayBuffer();
       const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
@@ -61,7 +66,7 @@ export default function MessageInput({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-User-Id': userId.toString()
+          'X-User-Id': currentUserId
         },
         body: JSON.stringify({ 
           audioData: base64,

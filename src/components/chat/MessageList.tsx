@@ -52,28 +52,9 @@ export default function MessageList({
     <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-2 md:space-y-3">
       {messages.map((message) => {
         const isOwn = String(message.senderId) === String(currentUserId);
-        const messageProfile = isOwn ? currentUserProfile : profile;
         
         return (
-          <div key={message.id} className={`flex gap-2 ${isOwn ? 'justify-end' : 'justify-start'}`}>
-            {!isOwn && (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                {messageProfile?.avatar ? (
-                  <img 
-                    src={messageProfile.avatar} 
-                    alt={messageProfile.username} 
-                    className="w-full h-full rounded-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      e.currentTarget.parentElement!.textContent = messageProfile.username[0]?.toUpperCase() || '?';
-                    }}
-                  />
-                ) : (
-                  messageProfile?.username[0]?.toUpperCase()
-                )}
-              </div>
-            )}
-            
+          <div key={message.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
             <Card className={`max-w-[75%] md:max-w-md p-2 md:p-3 ${
               isOwn 
                 ? 'bg-gradient-to-br from-purple-500 to-pink-500 text-white' 
@@ -102,24 +83,6 @@ export default function MessageList({
                 })}
               </p>
             </Card>
-            
-            {isOwn && (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                {messageProfile?.avatar ? (
-                  <img 
-                    src={messageProfile.avatar} 
-                    alt={messageProfile.username} 
-                    className="w-full h-full rounded-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      e.currentTarget.parentElement!.textContent = messageProfile.username[0]?.toUpperCase() || '?';
-                    }}
-                  />
-                ) : (
-                  messageProfile?.username[0]?.toUpperCase()
-                )}
-              </div>
-            )}
           </div>
         );
       })}
