@@ -61,7 +61,7 @@ export default function VoiceMessage({ voiceUrl, duration, isOwn }: VoiceMessage
         onClick={togglePlay}
         className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
           isOwn 
-            ? 'bg-white text-purple-500 hover:bg-purple-50' 
+            ? 'bg-purple-500 text-white hover:bg-purple-600' 
             : 'bg-blue-500 text-white hover:bg-blue-600'
         }`}
       >
@@ -76,14 +76,14 @@ export default function VoiceMessage({ voiceUrl, duration, isOwn }: VoiceMessage
         <div className="relative h-1 bg-gray-200/50 rounded-full overflow-hidden">
           <div 
             className={`absolute left-0 top-0 h-full rounded-full transition-all ${
-              isOwn ? 'bg-white' : 'bg-blue-400'
+              isOwn ? 'bg-purple-500' : 'bg-blue-400'
             }`}
             style={{ width: `${progress}%` }}
           />
         </div>
         
-        <div className={`flex items-center justify-between text-xs font-mono ${isOwn ? 'text-purple-100' : 'text-muted-foreground'}`}>
-          <span>{formatTime(isPlaying ? currentTime : 0)}</span>
+        <div className={`flex items-center justify-between text-xs font-mono ${isOwn ? 'text-gray-700' : 'text-muted-foreground'}`}>
+          <span>{formatTime(currentTime)}</span>
           <span className="opacity-70">{formatTime(duration)}</span>
         </div>
       </div>
