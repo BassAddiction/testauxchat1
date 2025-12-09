@@ -113,13 +113,17 @@ def handle_upload(event: Dict[str, Any]) -> Dict[str, Any]:
     import base64
     
     try:
+        print('[DEBUG] Starting file upload')
         s3_access_key = os.environ.get('TIMEWEB_S3_ACCESS_KEY')
         s3_secret_key = os.environ.get('TIMEWEB_S3_SECRET_KEY')
         s3_bucket = os.environ.get('TIMEWEB_S3_BUCKET_NAME')
         s3_endpoint = os.environ.get('TIMEWEB_S3_ENDPOINT', 'https://s3.twcstorage.ru')
         s3_region = os.environ.get('TIMEWEB_S3_REGION', 'ru-1')
         
+        print(f'[DEBUG] S3 config: endpoint={s3_endpoint}, bucket={s3_bucket}, region={s3_region}')
+        
         if not all([s3_access_key, s3_secret_key, s3_bucket]):
+            print('[ERROR] S3 credentials missing')
             return {
                 'statusCode': 500,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
@@ -128,6 +132,7 @@ def handle_upload(event: Dict[str, Any]) -> Dict[str, Any]:
             }
         
         # Parse JSON body with base64 data
+        print('[DEBUG] Parsing request body')
         body_str = event.get('body', '{}')
         body_data = json.loads(body_str)
         file_base64 = body_data.get('fileData', body_data.get('audioData', ''))
@@ -135,6 +140,7 @@ def handle_upload(event: Dict[str, Any]) -> Dict[str, Any]:
         content_type = body_data.get('contentType', 'image/jpeg')
         
         if not file_base64:
+            print('[ERROR] No file data in request')
             return {
                 'statusCode': 400,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
@@ -143,9 +149,11 @@ def handle_upload(event: Dict[str, Any]) -> Dict[str, Any]:
             }
         
         # Decode base64 (strip data:image/... prefix if present)
+        print('[DEBUG] Decoding base64')
         if ',' in file_base64:
             file_base64 = file_base64.split(',')[1]
         file_data = base64.b64decode(file_base64)
+        print(f'[DEBUG] File size: {len(file_data)} bytes')
         
         # Generate filename based on content type
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
@@ -155,16 +163,20 @@ def handle_upload(event: Dict[str, Any]) -> Dict[str, Any]:
         else:
             filename = f'voice-messages/voice_{timestamp}.webm'
         
+        print(f'[DEBUG] Generated filename: {filename}')
+        
         # Upload to S3
+        print('[DEBUG] Creating S3 client')
         s3_client = boto3.client(
             's3',
             endpoint_url=s3_endpoint,
             aws_access_key_id=s3_access_key,
             aws_secret_access_key=s3_secret_key,
             region_name=s3_region,
-            config=Config(signature_version='s3v4')
+            config=Config(signature_version='s3v4', connect_timeout=5, read_timeout=10)
         )
         
+        print('[DEBUG] Uploading to S3...')
         s3_client.put_object(
             Bucket=s3_bucket,
             Key=filename,
@@ -172,6 +184,7 @@ def handle_upload(event: Dict[str, Any]) -> Dict[str, Any]:
             ContentType=content_type
         )
         
+        print('[DEBUG] Upload successful')
         file_url = f'{s3_endpoint}/{s3_bucket}/{filename}'
         
         return {
