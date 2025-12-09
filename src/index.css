@@ -4,12 +4,11 @@
 
 @layer base {
   html {
-    overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
   }
 
   body {
-    overscroll-behavior: none;
+    overscroll-behavior-x: none;
   }
 
   :root {
