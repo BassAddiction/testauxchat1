@@ -85,8 +85,28 @@ export default function Conversations() {
       const data = await response.json();
       const newConversations = data.conversations || [];
       
+      // Загружаем фото для каждого пользователя
+      const conversationsWithPhotos = await Promise.all(
+        newConversations.map(async (conv: Conversation) => {
+          try {
+            const photosResponse = await fetch(
+              `https://functions.poehali.dev/6ab5e5ca-f93c-438c-bc46-7eb7a75e2734?userId=${conv.userId}`,
+              { headers: { 'X-User-Id': currentUserId || '0' } }
+            );
+            const photosData = await photosResponse.json();
+            const userAvatar = photosData.photos && photosData.photos.length > 0 
+              ? photosData.photos[0].url 
+              : conv.avatarUrl;
+            
+            return { ...conv, avatarUrl: userAvatar };
+          } catch (error) {
+            return conv;
+          }
+        })
+      );
+      
       // Считаем общее количество непрочитанных
-      const totalUnread = newConversations.reduce((sum: number, conv: Conversation) => sum + conv.unreadCount, 0);
+      const totalUnread = conversationsWithPhotos.reduce((sum: number, conv: Conversation) => sum + conv.unreadCount, 0);
       
       // Инициализируем счётчик при первой загрузке
       if (prevUnreadCountRef.current === 0) {
@@ -101,7 +121,7 @@ export default function Conversations() {
         prevUnreadCountRef.current = totalUnread;
       }
       
-      setConversations(newConversations);
+      setConversations(conversationsWithPhotos);
     } catch (error) {
       console.error('Error loading conversations:', error);
     } finally {
