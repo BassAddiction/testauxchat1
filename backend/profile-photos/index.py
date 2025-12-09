@@ -71,6 +71,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     if method == 'POST':
+        query_params = event.get('queryStringParameters', {}) or {}
+        post_user_id = int(query_params.get('userId', user_id))
+        
         body_data = json.loads(event.get('body', '{}'))
         photo_url = body_data.get('photo_url', body_data.get('photoUrl', '')).strip()
         
@@ -85,7 +88,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         cur.execute(
-            f"SELECT COUNT(*) FROM user_photos WHERE user_id = {user_id}"
+            f"SELECT COUNT(*) FROM user_photos WHERE user_id = {post_user_id}"
         )
         count = cur.fetchone()[0]
         
@@ -101,7 +104,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         photo_url_escaped = photo_url.replace("'", "''")
         cur.execute(
-            f"INSERT INTO user_photos (user_id, photo_url) VALUES ({user_id}, '{photo_url_escaped}') RETURNING id"
+            f"INSERT INTO user_photos (user_id, photo_url) VALUES ({post_user_id}, '{photo_url_escaped}') RETURNING id"
         )
         photo_id = cur.fetchone()[0]
         conn.commit()
