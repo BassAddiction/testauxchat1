@@ -47,8 +47,50 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     cur = conn.cursor()
     
     if method == 'GET':
-        query_params = event.get('queryStringParameters', {})
+        query_params = event.get('queryStringParameters', {}) or {}
+        action = query_params.get('action')
         target_user_id = query_params.get('userId', user_id)
+        
+        if action == 'add':
+            photo_url = query_params.get('photoUrl', '').strip()
+            if not photo_url:
+                cur.close()
+                conn.close()
+                return {
+                    'statusCode': 400,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'error': 'photoUrl required'}),
+                    'isBase64Encoded': False
+                }
+            
+            cur.execute(f"SELECT COUNT(*) FROM user_photos WHERE user_id = {user_id}")
+            count = cur.fetchone()[0]
+            
+            if count >= 6:
+                cur.close()
+                conn.close()
+                return {
+                    'statusCode': 400,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'error': 'Maximum 6 photos allowed'}),
+                    'isBase64Encoded': False
+                }
+            
+            photo_url_escaped = photo_url.replace("'", "''")
+            cur.execute(
+                f"INSERT INTO user_photos (user_id, photo_url) VALUES ({user_id}, '{photo_url_escaped}') RETURNING id"
+            )
+            photo_id = cur.fetchone()[0]
+            conn.commit()
+            cur.close()
+            conn.close()
+            
+            return {
+                'statusCode': 200,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'success': True, 'photoId': photo_id}),
+                'isBase64Encoded': False
+            }
         
         cur.execute(
             f"SELECT id, photo_url, created_at, display_order FROM user_photos WHERE user_id = {target_user_id} ORDER BY display_order ASC, created_at DESC LIMIT 6"

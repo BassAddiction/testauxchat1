@@ -114,14 +114,11 @@ export default function Profile() {
 
     setIsAddingPhoto(true);
     try {
+      const encodedUrl = encodeURIComponent(photoUrl);
       const response = await fetch(
-        `https://functions.poehali.dev/6ab5e5ca-f93c-438c-bc46-7eb7a75e2734?userId=${currentUserId}`,
+        `${FUNCTIONS['profile-photos']}?userId=${currentUserId}&action=add&photoUrl=${encodedUrl}`,
         {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ photoUrl })
+          headers: { 'X-User-Id': currentUserId || '0' }
         }
       );
 
