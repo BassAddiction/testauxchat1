@@ -448,7 +448,7 @@ const Index = () => {
       reader.onloadend = async () => {
         const base64 = reader.result as string;
         
-        const uploadResponse = await fetch('https://functions.poehali.dev/7046f3b0-52a8-4455-a8b2-c28638e5002f', {
+        const uploadResponse = await fetch('https://functions.poehali.dev/559ff756-6b7f-42fc-8a61-2dac6de68639', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

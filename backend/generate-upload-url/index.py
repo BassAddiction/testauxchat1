@@ -130,8 +130,9 @@ def handle_upload(event: Dict[str, Any]) -> Dict[str, Any]:
         # Parse JSON body with base64 data
         body_str = event.get('body', '{}')
         body_data = json.loads(body_str)
-        file_base64 = body_data.get('audioData', '')
-        content_type = body_data.get('contentType', 'audio/webm')
+        file_base64 = body_data.get('fileData', body_data.get('audioData', ''))
+        file_name = body_data.get('fileName', '')
+        content_type = body_data.get('contentType', 'image/jpeg')
         
         if not file_base64:
             return {
@@ -141,7 +142,9 @@ def handle_upload(event: Dict[str, Any]) -> Dict[str, Any]:
                 'isBase64Encoded': False
             }
         
-        # Decode base64
+        # Decode base64 (strip data:image/... prefix if present)
+        if ',' in file_base64:
+            file_base64 = file_base64.split(',')[1]
         file_data = base64.b64decode(file_base64)
         
         # Generate filename based on content type
@@ -152,47 +155,27 @@ def handle_upload(event: Dict[str, Any]) -> Dict[str, Any]:
         else:
             filename = f'voice-messages/voice_{timestamp}.webm'
         
-        # Upload to S3
+        # Use poehali.dev S3 storage
         s3_client = boto3.client(
             's3',
-            endpoint_url=s3_endpoint,
-            aws_access_key_id=s3_access_key,
-            aws_secret_access_key=s3_secret_key,
-            region_name=s3_region,
-            config=Config(signature_version='s3v4')
+            endpoint_url='https://bucket.poehali.dev',
+            aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+            aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY']
         )
-        
-        # Настройка CORS для бакета (один раз)
-        try:
-            s3_client.put_bucket_cors(
-                Bucket=s3_bucket,
-                CORSConfiguration={
-                    'CORSRules': [{
-                        'AllowedOrigins': ['*'],
-                        'AllowedMethods': ['GET', 'HEAD', 'PUT', 'POST'],
-                        'AllowedHeaders': ['*'],
-                        'MaxAgeSeconds': 3600
-                    }]
-                }
-            )
-        except Exception as cors_error:
-            print(f'CORS setup warning: {cors_error}')
         
         s3_client.put_object(
-            Bucket=s3_bucket,
+            Bucket='files',
             Key=filename,
             Body=file_data,
-            ContentType=content_type,
-            ACL='public-read',
-            CacheControl='public, max-age=31536000'
+            ContentType=content_type
         )
         
-        file_url = f'{s3_endpoint}/{s3_bucket}/{filename}'
+        file_url = f"https://cdn.poehali.dev/projects/{os.environ['AWS_ACCESS_KEY_ID']}/bucket/{filename}"
         
         return {
             'statusCode': 200,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'fileUrl': file_url}),
+            'body': json.dumps({'url': file_url}),
             'isBase64Encoded': False
         }
         
