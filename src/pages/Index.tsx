@@ -1275,7 +1275,7 @@ const Index = () => {
       </header>
 
       <main className="flex-1 flex flex-col max-w-3xl mx-auto w-full">
-        <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-1.5 md:space-y-2 overscroll-contain" style={{ paddingBottom: '120px' }}>
+        <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-1 overscroll-contain" style={{ paddingBottom: '120px' }}>
           {displayLimit < messages.length && (
             <div className="text-center pb-2">
               <Button
