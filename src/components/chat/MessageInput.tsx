@@ -54,16 +54,19 @@ export default function MessageInput({
 
   const uploadVoiceMessage = async (audioBlob: Blob) => {
     try {
-      // Конвертируем в base64 для надежной передачи
       const arrayBuffer = await audioBlob.arrayBuffer();
       const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
       
-      // Upload через бэкенд (обход CORS)
-      const uploadData = await api.getUploadUrl('audio/webm', 'webm');
-      const uploadResponse = await fetch(uploadData.uploadUrl, {
-        method: 'PUT',
-        body: audioBlob,
-        headers: { 'Content-Type': 'audio/webm' }
+      const uploadResponse = await fetch('https://functions.poehali.dev/559ff756-6b7f-42fc-8a61-2dac6de68639', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': userId.toString()
+        },
+        body: JSON.stringify({ 
+          audioData: base64,
+          contentType: 'audio/webm'
+        })
       });
 
       if (!uploadResponse.ok) {
@@ -71,12 +74,8 @@ export default function MessageInput({
         return;
       }
 
-      if (!uploadResponse.ok) {
-        toast.error('Ошибка загрузки файла');
-        return;
-      }
-      
-      await sendMessage(uploadData.fileUrl, recordingTime);
+      const { fileUrl } = await uploadResponse.json();
+      await sendMessage(fileUrl, recordingTime);
     } catch (error) {
       console.error('Error uploading voice:', error);
       toast.error('Ошибка загрузки голосового сообщения');
