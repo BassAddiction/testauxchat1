@@ -89,6 +89,8 @@ const Index = () => {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [checkingSubscription, setCheckingSubscription] = useState(false);
   const [subscribedUsers, setSubscribedUsers] = useState<Set<number>>(new Set());
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const prevMessagesLengthRef = useRef(0);
 
   const playNotificationSound = () => {
     try {
@@ -147,7 +149,17 @@ const Index = () => {
           timestamp: new Date(msg.created_at),
           reactions: msg.reactions || [],
         }));
+        
+        const hasNewMessages = formattedMessages.length > prevMessagesLengthRef.current;
+        prevMessagesLengthRef.current = formattedMessages.length;
+        
         setMessages(formattedMessages);
+        
+        if (hasNewMessages) {
+          setTimeout(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+          }, 100);
+        }
       }
     } catch (error) {
       console.error("Load messages error:", error);
@@ -1333,6 +1345,7 @@ const Index = () => {
             </div>
           );
           })}
+          <div ref={messagesEndRef} />
         </div>
         
         <div className="fixed bottom-0 left-0 right-0 p-3 md:p-4 border-t bg-white flex-shrink-0 z-10 max-w-3xl mx-auto" style={{ paddingBottom: 'calc(12px + env(safe-area-inset-bottom))' }}>
