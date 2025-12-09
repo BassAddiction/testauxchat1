@@ -109,9 +109,8 @@ export default function Profile() {
     }
   };
 
-  const addPhoto = async (url?: string) => {
-    const urlToAdd = url || photoUrl;
-    if (!urlToAdd.trim()) return;
+  const addPhoto = async () => {
+    if (!photoUrl.trim()) return;
 
     setIsAddingPhoto(true);
     try {
@@ -123,7 +122,7 @@ export default function Profile() {
             'Content-Type': 'application/json',
             'X-User-Id': currentUserId || '0'
           },
-          body: JSON.stringify({ photoUrl: urlToAdd })
+          body: JSON.stringify({ photoUrl })
         }
       );
 
@@ -433,28 +432,24 @@ export default function Profile() {
             </div>
 
             {isOwnProfile && photos.length < 6 && (
-              <div className="mb-3 md:mb-4">
-                <button 
+              <div className="mb-3 md:mb-4 flex gap-2">
+                <input
+                  type="text"
+                  value={photoUrl}
+                  onChange={(e) => setPhotoUrl(e.target.value)}
+                  placeholder="Вставьте URL изображения"
+                  className="flex-1 px-3 py-2 bg-background border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                   disabled={isAddingPhoto}
-                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90 h-9 md:h-10 text-sm rounded-md font-medium flex items-center justify-center disabled:opacity-50"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    const url = prompt('Вставьте ссылку на изображение:');
-                    if (url && url.trim()) {
-                      addPhoto(url.trim());
-                    }
-                  }}
+                />
+                <button 
+                  disabled={isAddingPhoto || !photoUrl.trim()}
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90 px-4 py-2 text-sm rounded-md font-medium flex items-center disabled:opacity-50"
+                  onClick={() => addPhoto()}
                 >
                   {isAddingPhoto ? (
-                    <>
-                      <Icon name="Loader2" size={16} className="mr-2 animate-spin" />
-                      <span className="text-xs md:text-sm">Добавление...</span>
-                    </>
+                    <Icon name="Loader2" size={16} className="animate-spin" />
                   ) : (
-                    <>
-                      <Icon name="Plus" size={16} className="mr-2" />
-                      <span className="text-xs md:text-sm">Добавить фото по URL</span>
-                    </>
+                    <Icon name="Plus" size={16} />
                   )}
                 </button>
               </div>
