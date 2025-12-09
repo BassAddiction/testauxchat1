@@ -254,21 +254,23 @@ export default function Chat() {
   }
 
   return (
-    <div className="h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 flex flex-col overflow-hidden">
-      <ChatHeader
-        profile={profile}
-        userId={userId}
-        isBlocked={isBlocked}
-        checkingBlock={checkingBlock}
-        menuOpen={menuOpen}
-        setMenuOpen={setMenuOpen}
-        onBack={() => navigate('/')}
-        onProfileClick={() => navigate(`/profile/${userId}`)}
-        onBlockToggle={handleBlockToggle}
-      />
+    <div className="h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 flex flex-col">
+      <div className="sticky top-0 z-10 flex-shrink-0">
+        <ChatHeader
+          profile={profile}
+          userId={userId}
+          isBlocked={isBlocked}
+          checkingBlock={checkingBlock}
+          menuOpen={menuOpen}
+          setMenuOpen={setMenuOpen}
+          onBack={() => navigate('/')}
+          onProfileClick={() => navigate(`/profile/${userId}`)}
+          onBlockToggle={handleBlockToggle}
+        />
+      </div>
 
-      <main className="flex-1 container mx-auto max-w-4xl p-2 md:p-4 flex flex-col overflow-hidden min-h-0">
-        <Card className="flex-1 flex flex-col shadow-lg min-h-0 bg-card/50 backdrop-blur border-purple-500/20">
+      <main className="flex-1 overflow-hidden flex flex-col min-h-0">
+        <div className="flex-1 flex flex-col overflow-hidden min-h-0 bg-card/50 backdrop-blur">
           <MessageList
             messages={messages}
             currentUserId={currentUserId}
@@ -281,7 +283,7 @@ export default function Chat() {
             receiverId={Number(userId)}
             onMessageSent={loadMessages}
           />
-        </Card>
+        </div>
       </main>
     </div>
   );
