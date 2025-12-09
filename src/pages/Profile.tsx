@@ -109,8 +109,9 @@ export default function Profile() {
     }
   };
 
-  const addPhoto = async () => {
-    if (!photoUrl.trim()) return;
+  const addPhoto = async (url?: string) => {
+    const urlToAdd = url || photoUrl;
+    if (!urlToAdd.trim()) return;
 
     setIsAddingPhoto(true);
     try {
@@ -122,7 +123,7 @@ export default function Profile() {
             'Content-Type': 'application/json',
             'X-User-Id': currentUserId || '0'
           },
-          body: JSON.stringify({ photoUrl })
+          body: JSON.stringify({ photoUrl: urlToAdd })
         }
       );
 
@@ -440,8 +441,7 @@ export default function Profile() {
                     e.preventDefault();
                     const url = prompt('Вставьте ссылку на изображение:');
                     if (url && url.trim()) {
-                      setPhotoUrl(url.trim());
-                      addPhoto();
+                      addPhoto(url.trim());
                     }
                   }}
                 >
