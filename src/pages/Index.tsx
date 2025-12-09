@@ -466,7 +466,7 @@ const Index = () => {
           return;
         }
 
-        const { url } = await uploadResponse.json();
+        const { fileUrl } = await uploadResponse.json();
 
         const addPhotoResponse = await fetch(
           'https://functions.poehali.dev/6ab5e5ca-f93c-438c-bc46-7eb7a75e2734',
@@ -476,7 +476,7 @@ const Index = () => {
               'Content-Type': 'application/json',
               'X-User-Id': userId.toString()
             },
-            body: JSON.stringify({ photoUrl: url })
+            body: JSON.stringify({ photoUrl: fileUrl })
           }
         );
 

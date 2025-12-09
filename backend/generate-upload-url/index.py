@@ -155,27 +155,47 @@ def handle_upload(event: Dict[str, Any]) -> Dict[str, Any]:
         else:
             filename = f'voice-messages/voice_{timestamp}.webm'
         
-        # Use poehali.dev S3 storage
+        # Upload to S3
         s3_client = boto3.client(
             's3',
-            endpoint_url='https://bucket.poehali.dev',
-            aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
-            aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY']
+            endpoint_url=s3_endpoint,
+            aws_access_key_id=s3_access_key,
+            aws_secret_access_key=s3_secret_key,
+            region_name=s3_region,
+            config=Config(signature_version='s3v4')
         )
+        
+        # Настройка CORS для бакета (один раз)
+        try:
+            s3_client.put_bucket_cors(
+                Bucket=s3_bucket,
+                CORSConfiguration={
+                    'CORSRules': [{
+                        'AllowedOrigins': ['*'],
+                        'AllowedMethods': ['GET', 'HEAD', 'PUT', 'POST'],
+                        'AllowedHeaders': ['*'],
+                        'MaxAgeSeconds': 3600
+                    }]
+                }
+            )
+        except Exception as cors_error:
+            print(f'CORS setup warning: {cors_error}')
         
         s3_client.put_object(
-            Bucket='files',
+            Bucket=s3_bucket,
             Key=filename,
             Body=file_data,
-            ContentType=content_type
+            ContentType=content_type,
+            ACL='public-read',
+            CacheControl='public, max-age=31536000'
         )
         
-        file_url = f"https://cdn.poehali.dev/projects/{os.environ['AWS_ACCESS_KEY_ID']}/bucket/{filename}"
+        file_url = f'{s3_endpoint}/{s3_bucket}/{filename}'
         
         return {
             'statusCode': 200,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'url': file_url}),
+            'body': json.dumps({'fileUrl': file_url}),
             'isBase64Encoded': False
         }
         
