@@ -519,12 +519,12 @@ export default function Profile() {
                     {isAddingPhoto ? (
                       <>
                         <Icon name="Loader2" size={18} className="mr-2 animate-spin" />
-                        <span>Загрузка...</span>
+                        <span>Загрузка фото...</span>
                       </>
                     ) : (
                       <>
                         <Icon name="Upload" size={18} className="mr-2" />
-                        <span>Загрузить с устройства</span>
+                        <span>🟡 ЖЁЛТАЯ КНОПКА ЗАГРУЗКИ 🟡</span>
                       </>
                     )}
                   </div>
