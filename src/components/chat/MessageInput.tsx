@@ -159,6 +159,26 @@ export default function MessageInput({
     }
   };
 
+  const handleMouseDown = () => {
+    startRecording();
+  };
+
+  const handleMouseUp = () => {
+    if (isRecording) {
+      stopRecording();
+    }
+  };
+
+  const handleTouchStart = () => {
+    startRecording();
+  };
+
+  const handleTouchEnd = () => {
+    if (isRecording) {
+      stopRecording();
+    }
+  };
+
   return (
     <div className="bg-background border-t p-3 md:p-4">
       {isRecording ? (
@@ -166,55 +186,49 @@ export default function MessageInput({
           <div className="flex-1 flex items-center gap-3 bg-red-500/10 rounded-full px-4 py-2.5">
             <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
             <span className="font-mono text-sm font-medium">{formatTime(recordingTime)}</span>
+            <span className="text-xs text-muted-foreground ml-2">Отпустите для отправки</span>
             <div className="flex-1" />
-            <button
-              onClick={cancelRecording}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <Icon name="X" size={20} />
-            </button>
           </div>
-          <button
-            onClick={stopRecording}
-            className="w-11 h-11 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white flex items-center justify-center hover:opacity-90 transition-opacity"
-          >
-            <Icon name="Send" size={20} />
-          </button>
         </div>
       ) : (
         <div className="flex items-center gap-2">
-          <button
-            onClick={startRecording}
-            className="w-10 h-10 rounded-full hover:bg-accent flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Icon name="Mic" size={22} />
-          </button>
-          
           <div className="flex-1 relative">
             <Input
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Сообщение"
-              className="w-full rounded-full bg-secondary/50 border-0 px-4 pr-12 h-11 focus-visible:ring-1 focus-visible:ring-purple-500"
+              className="w-full rounded-full bg-secondary/50 border-0 pl-4 pr-20 h-11 focus-visible:ring-1 focus-visible:ring-purple-500"
             />
-            {newMessage.trim() && (
-              <button
-                onClick={() => sendMessage()}
-                className="absolute right-1 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white flex items-center justify-center hover:opacity-90 transition-opacity"
-              >
-                <Icon name="Send" size={18} />
-              </button>
-            )}
+            <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              {newMessage.trim() ? (
+                <button
+                  onClick={() => sendMessage()}
+                  className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white flex items-center justify-center hover:opacity-90 transition-opacity"
+                >
+                  <Icon name="Send" size={18} />
+                </button>
+              ) : (
+                <>
+                  <button
+                    className="w-9 h-9 rounded-full hover:bg-accent/50 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Icon name="Paperclip" size={20} />
+                  </button>
+                  <button
+                    onMouseDown={handleMouseDown}
+                    onMouseUp={handleMouseUp}
+                    onMouseLeave={handleMouseUp}
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
+                    className="w-9 h-9 rounded-full hover:bg-accent/50 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors active:bg-red-500/20"
+                  >
+                    <Icon name="Mic" size={20} />
+                  </button>
+                </>
+              )}
+            </div>
           </div>
-          
-          {!newMessage.trim() && (
-            <button
-              className="w-10 h-10 rounded-full hover:bg-accent flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Icon name="Paperclip" size={22} />
-            </button>
-          )}
         </div>
       )}
     </div>
