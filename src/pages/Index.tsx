@@ -1275,7 +1275,7 @@ const Index = () => {
       </header>
 
       <main className="flex-1 flex flex-col max-w-3xl mx-auto w-full">
-        <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-2 md:space-y-4 overscroll-contain" style={{ paddingBottom: '120px' }}>
+        <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-1.5 md:space-y-2 overscroll-contain" style={{ paddingBottom: '120px' }}>
           {displayLimit < messages.length && (
             <div className="text-center pb-2">
               <Button
@@ -1335,7 +1335,7 @@ const Index = () => {
           })}
         </div>
         
-        <div className="fixed bottom-0 left-0 right-0 p-3 md:p-4 border-t bg-white flex-shrink-0 z-10" style={{ paddingBottom: 'calc(12px + env(safe-area-inset-bottom))' }}>
+        <div className="fixed bottom-0 left-0 right-0 p-3 md:p-4 border-t bg-white flex-shrink-0 z-10 max-w-3xl mx-auto" style={{ paddingBottom: 'calc(12px + env(safe-area-inset-bottom))' }}>
           <div className="space-y-2">
             <div className="relative flex items-end">
               <textarea
