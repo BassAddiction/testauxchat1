@@ -180,14 +180,27 @@ export default function MessageInput({
   };
 
   return (
-    <div className="bg-background border-t p-3 md:p-4">
+    <div 
+      className="bg-background border-t p-3 md:p-4"
+      onMouseUp={handleMouseUp}
+      onTouchEnd={handleTouchEnd}
+    >
       {isRecording ? (
         <div className="flex items-center gap-2">
           <div className="flex-1 flex items-center gap-3 bg-red-500/10 rounded-full px-4 py-2.5">
-            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+            <button
+              className="w-9 h-9 rounded-full bg-red-500 text-white flex items-center justify-center flex-shrink-0"
+              onMouseDown={handleMouseDown}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+            >
+              <Icon name="Mic" size={20} />
+            </button>
+            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse flex-shrink-0"></div>
             <span className="font-mono text-sm font-medium">{formatTime(recordingTime)}</span>
-            <span className="text-xs text-muted-foreground ml-2">Отпустите для отправки</span>
-            <div className="flex-1" />
+            <span className="text-xs text-muted-foreground">Отпустите</span>
           </div>
         </div>
       ) : (
@@ -217,10 +230,7 @@ export default function MessageInput({
                   </button>
                   <button
                     onMouseDown={handleMouseDown}
-                    onMouseUp={handleMouseUp}
-                    onMouseLeave={handleMouseUp}
                     onTouchStart={handleTouchStart}
-                    onTouchEnd={handleTouchEnd}
                     className="w-9 h-9 rounded-full hover:bg-accent/50 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors active:bg-red-500/20"
                   >
                     <Icon name="Mic" size={20} />
