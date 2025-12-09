@@ -440,6 +440,7 @@ export default function Profile() {
                   className="hidden"
                   disabled={uploadingFile}
                   id="photo-upload"
+                  data-skip-pp-intercept="true"
                 />
                 <button 
                   disabled={uploadingFile}

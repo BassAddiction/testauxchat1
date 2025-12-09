@@ -18,6 +18,25 @@
     <meta property="og:image" content="https://cdn.poehali.dev/intertnal/img/og.png">
     <meta name="twitter:image" content="https://cdn.poehali.dev/intertnal/img/og.png">
       <meta name="pp-name" value="auxchat-energy-messages">
+      
+      <script>
+        // Блокируем перехват file inputs - ставим ловушку ПЕРЕД загрузкой pp-min-2.js
+        (function() {
+          const originalAddEventListener = HTMLInputElement.prototype.addEventListener;
+          HTMLInputElement.prototype.addEventListener = function(type, listener, options) {
+            // Пропускаем перехват change событий для file inputs от pp-min-2.js
+            if (this.type === 'file' && type === 'change') {
+              const stack = new Error().stack || '';
+              if (stack.includes('pp-min-2')) {
+                console.log('Blocked pp-min-2.js file input intercept');
+                return;
+              }
+            }
+            return originalAddEventListener.call(this, type, listener, options);
+          };
+        })();
+      </script>
+      
       <script src="https://cdn.poehali.dev/intertnal/js/route-min.js"></script>
       <script src="https://cdn.poehali.dev/intertnal/js/inspector-min.js"></script>
       <script src="https://cdn.poehali.dev/intertnal/js/telemetry-min.js"></script>
@@ -26,11 +45,6 @@
 
 <body>
 <div id="root"></div>
-
-<script>
-// Отключаем перехват file inputs от pp-min-2.js
-window.DISABLE_PP_FILE_UPLOAD = true;
-</script>
 
 <script type="module" src="/src/main.tsx"></script>
 
