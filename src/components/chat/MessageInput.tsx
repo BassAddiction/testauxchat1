@@ -102,9 +102,21 @@ export default function MessageInput({
 
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 16000
+        }
+      });
       audioStreamRef.current = stream;
-      const mediaRecorder = new MediaRecorder(stream);
+      
+      const options = {
+        mimeType: 'audio/webm;codecs=opus',
+        audioBitsPerSecond: 16000
+      };
+      
+      const mediaRecorder = new MediaRecorder(stream, options);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
@@ -190,14 +202,20 @@ export default function MessageInput({
     }
   };
 
-  const handleTouchStart = () => {
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault();
     startRecording();
   };
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    e.preventDefault();
     if (isRecording) {
       stopRecording();
     }
+  };
+
+  const preventContextMenu = (e: React.TouchEvent | React.MouseEvent) => {
+    e.preventDefault();
   };
 
   return (
@@ -205,17 +223,20 @@ export default function MessageInput({
       className="bg-background border-t p-3 md:p-4"
       onMouseUp={handleMouseUp}
       onTouchEnd={handleTouchEnd}
+      onContextMenu={preventContextMenu}
     >
       {isRecording ? (
         <div className="flex items-center gap-2">
           <div className="flex-1 flex items-center gap-3 bg-red-500/10 rounded-full px-4 py-2.5">
             <button
-              className="w-9 h-9 rounded-full bg-red-500 text-white flex items-center justify-center flex-shrink-0"
+              className="w-9 h-9 rounded-full bg-red-500 text-white flex items-center justify-center flex-shrink-0 select-none"
               onMouseDown={handleMouseDown}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
+              onContextMenu={preventContextMenu}
+              style={{ touchAction: 'none', WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
             >
               <Icon name="Mic" size={20} />
             </button>
@@ -252,7 +273,9 @@ export default function MessageInput({
                   <button
                     onMouseDown={handleMouseDown}
                     onTouchStart={handleTouchStart}
-                    className="w-9 h-9 rounded-full hover:bg-accent/50 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors active:bg-red-500/20"
+                    onContextMenu={preventContextMenu}
+                    className="w-9 h-9 rounded-full hover:bg-accent/50 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors active:bg-red-500/20 select-none"
+                    style={{ touchAction: 'none', WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
                   >
                     <Icon name="Mic" size={20} />
                   </button>
