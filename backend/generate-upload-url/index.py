@@ -176,10 +176,10 @@ def handle_upload(event: Dict[str, Any]) -> Dict[str, Any]:
             region_name=s3_region,
             config=BotoConfig(
                 signature_version='s3v4',
-                connect_timeout=10,
-                read_timeout=60,
-                retries={'max_attempts': 2, 'mode': 'standard'},
-                max_pool_connections=10
+                connect_timeout=5,
+                read_timeout=20,
+                retries={'max_attempts': 1, 'mode': 'standard'},
+                max_pool_connections=5
             )
         )
         
@@ -190,7 +190,8 @@ def handle_upload(event: Dict[str, Any]) -> Dict[str, Any]:
             Body=file_data,
             ContentType=content_type,
             ACL='public-read',
-            CacheControl='public, max-age=31536000'
+            CacheControl='public, max-age=31536000',
+            Metadata={'uploaded-via': 'cloud-function'}
         )
         
         print('[DEBUG] Upload successful')
