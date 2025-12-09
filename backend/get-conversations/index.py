@@ -83,20 +83,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             FROM private_messages
             WHERE receiver_id = '{safe_user_id}' AND is_read = FALSE
             GROUP BY receiver_id, sender_id
-        ),
-        first_photos AS (
-            SELECT user_id, url,
-                ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY uploaded_at ASC) as photo_rn
-            FROM profile_photos
         )
         SELECT 
-            u.id, u.username, COALESCE(fp.url, u.avatar_url) as avatar_url, u.last_activity,
+            u.id, u.username, u.avatar_url, u.last_activity,
             lm.last_message, lm.created_at,
             COALESCE(uc.unread_count, 0) as unread_count
         FROM last_messages lm
         JOIN users u ON u.id = lm.other_user_id
         LEFT JOIN unread_counts uc ON uc.sender_id = u.id
-        LEFT JOIN first_photos fp ON fp.user_id = u.id AND fp.photo_rn = 1
         WHERE lm.rn = 1
         ORDER BY lm.created_at DESC
     """)
