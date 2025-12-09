@@ -52,15 +52,28 @@ export default function MessageInput({
     }
   };
 
-  const uploadVoiceMessage = async (audioBlob: Blob) => {
+  const uploadVoiceMessage = async (audioBlob: Blob, duration: number) => {
     if (!currentUserId) {
       toast.error('Необходимо войти в систему');
       return;
     }
     
+    if (audioBlob.size === 0) {
+      toast.error('Запись слишком короткая');
+      return;
+    }
+    
     try {
       const arrayBuffer = await audioBlob.arrayBuffer();
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+      const uint8Array = new Uint8Array(arrayBuffer);
+      
+      let binary = '';
+      const chunkSize = 8192;
+      for (let i = 0; i < uint8Array.length; i += chunkSize) {
+        const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
+        binary += String.fromCharCode.apply(null, Array.from(chunk));
+      }
+      const base64 = btoa(binary);
       
       const uploadResponse = await fetch('https://functions.poehali.dev/559ff756-6b7f-42fc-8a61-2dac6de68639', {
         method: 'POST',
@@ -80,7 +93,7 @@ export default function MessageInput({
       }
 
       const { fileUrl } = await uploadResponse.json();
-      await sendMessage(fileUrl, recordingTime);
+      await sendMessage(fileUrl, duration);
     } catch (error) {
       console.error('Error uploading voice:', error);
       toast.error('Ошибка загрузки голосового сообщения');
@@ -102,12 +115,20 @@ export default function MessageInput({
       };
 
       mediaRecorder.onstop = async () => {
+        const duration = recordingTime;
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        await uploadVoiceMessage(audioBlob);
+        
         if (audioStreamRef.current) {
           audioStreamRef.current.getTracks().forEach(track => track.stop());
           audioStreamRef.current = null;
         }
+        
+        if (audioBlob.size > 0) {
+          await uploadVoiceMessage(audioBlob, duration);
+        }
+        
+        setRecordingTime(0);
+        audioChunksRef.current = [];
       };
 
       mediaRecorder.start();
