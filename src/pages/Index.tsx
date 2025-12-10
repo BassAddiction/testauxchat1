@@ -1848,7 +1848,13 @@ const Index = () => {
             <div className="space-y-2">
               <Button 
                 className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90"
-                onClick={requestGeolocation}
+                type="button"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('[GEO BUTTON MODAL] Clicked, userId:', userId, 'localStorage:', localStorage.getItem('auxchat_user_id'));
+                  await requestGeolocation();
+                }}
                 disabled={updatingLocation}
               >
                 {updatingLocation ? (
