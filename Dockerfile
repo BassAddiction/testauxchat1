@@ -6,7 +6,7 @@ FROM node:18 AS frontend-builder
 WORKDIR /app
 
 # Копируем package.json и устанавливаем зависимости
-COPY package.json bun.lockb ./
+COPY package.json bun.lock ./
 RUN npm install -g bun && bun install
 
 # Копируем весь проект
