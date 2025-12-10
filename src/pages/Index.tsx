@@ -156,23 +156,29 @@ const Index = () => {
         prevMessagesLengthRef.current = formattedMessages.length;
         
         // Проверяем новые сообщения от отслеживаемых пользователей
-        if (formattedMessages.length > 0 && subscribedUsers.size > 0) {
+        if (formattedMessages.length > 0) {
           const latestMessageId = formattedMessages[formattedMessages.length - 1].id;
           
-          if (lastCheckedMessageIdRef.current > 0 && latestMessageId > lastCheckedMessageIdRef.current) {
-            // Считаем новые сообщения от отслеживаемых
-            const newFromSubscribed = formattedMessages.filter(
-              msg => msg.id > lastCheckedMessageIdRef.current && 
-                     subscribedUsers.has(msg.userId) && 
-                     msg.userId !== userId
-            ).length;
-            
-            if (newFromSubscribed > 0) {
-              setNewSubscribedMessages(prev => prev + newFromSubscribed);
+          // Инициализируем при первой загрузке
+          if (lastCheckedMessageIdRef.current === 0) {
+            lastCheckedMessageIdRef.current = latestMessageId;
+          } else if (latestMessageId > lastCheckedMessageIdRef.current) {
+            // Считаем новые сообщения от отслеживаемых (только если есть подписки)
+            if (subscribedUsers.size > 0) {
+              const newFromSubscribed = formattedMessages.filter(
+                msg => msg.id > lastCheckedMessageIdRef.current && 
+                       subscribedUsers.has(msg.userId) && 
+                       msg.userId !== userId
+              ).length;
+              
+              if (newFromSubscribed > 0) {
+                setNewSubscribedMessages(prev => prev + newFromSubscribed);
+              }
             }
+            
+            // Всегда обновляем последний проверенный ID
+            lastCheckedMessageIdRef.current = latestMessageId;
           }
-          
-          lastCheckedMessageIdRef.current = latestMessageId;
         }
         
         setMessages(formattedMessages);
@@ -235,13 +241,18 @@ const Index = () => {
   };
 
   useEffect(() => {
-    loadMessages();
-    if (userId) {
-      updateActivity();
-      loadProfilePhotos();
-      loadUnreadCount();
-      loadSubscribedUsers();
-    }
+    const init = async () => {
+      if (userId) {
+        await loadSubscribedUsers(); // Загружаем подписки первыми
+        updateActivity();
+        loadProfilePhotos();
+        loadUnreadCount();
+      }
+      loadMessages();
+    };
+    
+    init();
+    
     const messagesInterval = setInterval(() => {
       loadMessages();
       if (userId) {
