@@ -39,6 +39,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     username = body_data.get('username', '').strip()
     password = body_data.get('password', '').strip()
     avatar = body_data.get('avatar', '')
+    latitude = body_data.get('latitude')
+    longitude = body_data.get('longitude')
+    city = body_data.get('city', '').strip()
     
     if not phone or not username or not password:
         return {
@@ -83,9 +86,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     safe_username = username.replace("'", "''")
     safe_avatar = avatar.replace("'", "''")
     safe_password_hash = password_hash.replace("'", "''")
-    cur.execute(
-        f"INSERT INTO users (phone, username, avatar_url, password_hash) VALUES ('{safe_phone}', '{safe_username}', '{safe_avatar}', '{safe_password_hash}') RETURNING id"
-    )
+    
+    # Формируем SQL с учётом геолокации
+    if latitude is not None and longitude is not None:
+        cur.execute(
+            f"INSERT INTO users (phone, username, avatar_url, password_hash, latitude, longitude) "
+            f"VALUES ('{safe_phone}', '{safe_username}', '{safe_avatar}', '{safe_password_hash}', {latitude}, {longitude}) "
+            f"RETURNING id"
+        )
+    else:
+        cur.execute(
+            f"INSERT INTO users (phone, username, avatar_url, password_hash) "
+            f"VALUES ('{safe_phone}', '{safe_username}', '{safe_avatar}', '{safe_password_hash}') "
+            f"RETURNING id"
+        )
     user_id = cur.fetchone()[0]
     
     conn.commit()

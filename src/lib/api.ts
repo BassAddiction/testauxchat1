@@ -83,8 +83,11 @@ export const api = {
   },
 
   // Messages endpoints
-  async getMessages(limit = 20, offset = 0) {
-    const res = await fetch(`${FUNCTIONS['get-messages']}?limit=${limit}&offset=${offset}`);
+  async getMessages(limit = 20, offset = 0, radius = 100) {
+    const userId = localStorage.getItem('auxchat_user_id');
+    const res = await fetch(`${FUNCTIONS['get-messages']}?limit=${limit}&offset=${offset}&radius=${radius}`, {
+      headers: this.headers(userId),
+    });
     return res.json();
   },
 

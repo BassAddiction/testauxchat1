@@ -382,6 +382,32 @@ const Index = () => {
       return;
     }
 
+    // Запрашиваем геолокацию
+    let latitude = null;
+    let longitude = null;
+    let city = '';
+    
+    try {
+      if (navigator.geolocation) {
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+        });
+        latitude = position.coords.latitude;
+        longitude = position.coords.longitude;
+        
+        // Определяем город через обратное геокодирование (примерно)
+        try {
+          const geoResponse = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
+          const geoData = await geoResponse.json();
+          city = geoData.address?.city || geoData.address?.town || geoData.address?.village || '';
+        } catch (e) {
+          console.log('Не удалось определить город');
+        }
+      }
+    } catch (geoError) {
+      console.log('Геолокация недоступна:', geoError);
+    }
+
     try {
       const response = await fetch(
         "https://functions.poehali.dev/1d4d268e-0d0a-454a-a1cc-ecd19c83471a",
@@ -393,6 +419,9 @@ const Index = () => {
             username,
             password,
             avatar: avatarFile || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
+            latitude,
+            longitude,
+            city
           }),
         }
       );
