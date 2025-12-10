@@ -733,9 +733,12 @@ const Index = () => {
   };
 
   const requestGeolocation = async () => {
-    console.log('[GEO] requestGeolocation called, userId:', userId);
-    if (!userId) {
+    // Получаем userId из localStorage для надежности
+    const currentUserId = userId || localStorage.getItem('auxchat_user_id');
+    console.log('[GEO] requestGeolocation called, userId:', currentUserId);
+    if (!currentUserId) {
       console.log('[GEO] No userId, returning');
+      alert('Ошибка: не найден ID пользователя');
       return;
     }
     
@@ -786,7 +789,7 @@ const Index = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-User-Id': userId.toString()
+          'X-User-Id': currentUserId.toString()
         },
         body: JSON.stringify({ latitude, longitude, city })
       });
@@ -1094,8 +1097,8 @@ const Index = () => {
                   <div className="space-y-4 pb-4">
                     <div className="flex items-start gap-4">
                       <div className="relative flex-shrink-0">
-                        <Avatar className="h-20 w-20">
-                          <AvatarImage src={user.avatar} alt={user.username} />
+                        <Avatar className="h-20 w-20 bg-gray-100">
+                          <AvatarImage src={user.avatar} alt={user.username} className="object-contain" />
                           <AvatarFallback>{user.username[0]}</AvatarFallback>
                         </Avatar>
                       </div>
