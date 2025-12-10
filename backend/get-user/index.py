@@ -95,8 +95,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'is_banned': row[5] if row[5] is not None else False,
             'bio': row[6] if row[6] else '',
             'status': 'online' if is_online else 'offline',
-            'latitude': row[8] if len(row) > 8 and row[8] is not None else None,
-            'longitude': row[9] if len(row) > 9 and row[9] is not None else None
+            'latitude': float(row[8]) if len(row) > 8 and row[8] is not None else None,
+            'longitude': float(row[9]) if len(row) > 9 and row[9] is not None else None
         }),
         'isBase64Encoded': False
     }
