@@ -73,9 +73,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     current_user_lon = None
     
     if user_id_str:
-        safe_user_id = str(int(user_id_str)).replace("'", "''")
+        user_id_int = int(user_id_str)
         cur.execute(f"""
-            SELECT latitude, longitude FROM users WHERE id = '{safe_user_id}'
+            SELECT latitude, longitude FROM users WHERE id = {user_id_int}
         """)
         user_location = cur.fetchone()
         if user_location:
