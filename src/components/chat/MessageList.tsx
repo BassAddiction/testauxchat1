@@ -37,9 +37,14 @@ export default function MessageList({
   currentUserId,
 }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const prevMessagesLengthRef = useRef(0);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Прокрутка только если добавились новые сообщения
+    if (messages.length > prevMessagesLengthRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+    prevMessagesLengthRef.current = messages.length;
   }, [messages]);
 
   return (
