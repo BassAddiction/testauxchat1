@@ -159,20 +159,36 @@ const Index = () => {
         if (formattedMessages.length > 0) {
           const latestMessageId = formattedMessages[formattedMessages.length - 1].id;
           
+          console.log('[SUBSCRIBED CHECK]', {
+            latestMessageId,
+            lastChecked: lastCheckedMessageIdRef.current,
+            subscribedUsersSize: subscribedUsers.size,
+            subscribedUserIds: Array.from(subscribedUsers)
+          });
+          
           // Инициализируем при первой загрузке
           if (lastCheckedMessageIdRef.current === 0) {
             lastCheckedMessageIdRef.current = latestMessageId;
+            console.log('[SUBSCRIBED CHECK] Initialized lastCheckedMessageId:', latestMessageId);
           } else if (latestMessageId > lastCheckedMessageIdRef.current) {
             // Считаем новые сообщения от отслеживаемых (только если есть подписки)
             if (subscribedUsers.size > 0) {
-              const newFromSubscribed = formattedMessages.filter(
-                msg => msg.id > lastCheckedMessageIdRef.current && 
-                       subscribedUsers.has(msg.userId) && 
-                       msg.userId !== userId
-              ).length;
+              const newMessages = formattedMessages.filter(
+                msg => msg.id > lastCheckedMessageIdRef.current
+              );
               
-              if (newFromSubscribed > 0) {
-                setNewSubscribedMessages(prev => prev + newFromSubscribed);
+              const newFromSubscribed = newMessages.filter(
+                msg => subscribedUsers.has(msg.userId) && msg.userId !== userId
+              );
+              
+              console.log('[SUBSCRIBED CHECK] New messages:', newMessages.length, 'From subscribed:', newFromSubscribed.length);
+              console.log('[SUBSCRIBED CHECK] New from subscribed users:', newFromSubscribed.map(m => ({ id: m.id, userId: m.userId, username: m.username })));
+              
+              if (newFromSubscribed.length > 0) {
+                setNewSubscribedMessages(prev => {
+                  console.log('[SUBSCRIBED CHECK] Updating count:', prev, '->', prev + newFromSubscribed.length);
+                  return prev + newFromSubscribed.length;
+                });
               }
             }
             
@@ -225,7 +241,9 @@ const Index = () => {
     if (!userId) return;
     try {
       const data = await api.getSubscriptions(userId.toString());
-      setSubscribedUsers(new Set(data.subscribedUserIds || []));
+      const userIds = data.subscribedUserIds || [];
+      console.log('[SUBSCRIPTIONS] Loaded subscribed users:', userIds);
+      setSubscribedUsers(new Set(userIds));
     } catch (error) {
       console.error('Load subscribed users error:', error);
     }
