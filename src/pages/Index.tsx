@@ -1061,14 +1061,14 @@ const Index = () => {
                     <DialogTitle>Профиль</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4 pb-4">
-                    <div className="flex items-center gap-4">
-                      <div className="relative">
+                    <div className="flex items-start gap-4">
+                      <div className="relative flex-shrink-0">
                         <Avatar className="h-20 w-20">
                           <AvatarImage src={user.avatar} alt={user.username} />
                           <AvatarFallback>{user.username[0]}</AvatarFallback>
                         </Avatar>
                       </div>
-                      <div>
+                      <div className="flex-1 min-w-0">
                         {isEditingUsername ? (
                           <div className="flex gap-2">
                             <Input
@@ -1254,7 +1254,11 @@ const Index = () => {
                         variant="outline"
                         size="sm"
                         className="w-full"
-                        onClick={requestGeolocation}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          requestGeolocation();
+                        }}
                         disabled={updatingLocation}
                       >
                         {updatingLocation ? (
