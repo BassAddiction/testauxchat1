@@ -1802,6 +1802,7 @@ const Index = () => {
               onChange={(e) => {
                 const radiusValues = [5, 10, 25, 50, 100, 500, 1000, 99999];
                 const newRadius = radiusValues[parseInt(e.target.value)];
+                console.log('[GEO RADIUS SLIDER] Changing from', geoRadius, 'to', newRadius);
                 setGeoRadius(newRadius);
                 localStorage.setItem('geo_radius', newRadius.toString());
               }}
@@ -1826,8 +1827,12 @@ const Index = () => {
             <Button 
               className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90"
               onClick={() => {
+                console.log('[GEO RADIUS MODAL] Closing with radius:', geoRadius);
                 setGeoRadiusModalOpen(false);
-                loadMessages();
+                setTimeout(() => {
+                  console.log('[GEO RADIUS MODAL] Loading messages with radius:', geoRadius);
+                  loadMessages();
+                }, 200);
               }}
             >
               Готово
