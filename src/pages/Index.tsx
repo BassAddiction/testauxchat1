@@ -1366,7 +1366,7 @@ const Index = () => {
                 <Button 
                   onClick={handleSendMessage} 
                   disabled={!user} 
-                  className="absolute right-1.5 bottom-1.5 h-9 w-9 p-0 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 disabled:opacity-40 disabled:cursor-not-allowed shadow-md transition-all"
+                  className="absolute right-1.5 bottom-1.5 h-9 w-9 p-0 rounded-full bg-blue-500 hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed shadow-md transition-all"
                 >
                   <Icon name="Send" size={18} className="ml-0.5" />
                 </Button>
