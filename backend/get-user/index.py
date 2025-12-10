@@ -59,10 +59,22 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     # Use simple query protocol - escape single quotes
     safe_user_id = str(user_id).replace("'", "''")
-    cur.execute(
-        f"SELECT id, phone, username, avatar_url, energy, is_banned, bio, last_activity, latitude, longitude, city FROM users WHERE id = '{safe_user_id}'"
-    )
-    row = cur.fetchone()
+    
+    # Try with city column first, fallback if it doesn't exist
+    try:
+        cur.execute(
+            f"SELECT id, phone, username, avatar_url, energy, is_banned, bio, last_activity, latitude, longitude, city FROM users WHERE id = '{safe_user_id}'"
+        )
+        row = cur.fetchone()
+        has_city = True
+    except Exception as e:
+        print(f'[GET-USER] Error with city column, trying without: {e}')
+        cur = conn.cursor()  # Reset cursor
+        cur.execute(
+            f"SELECT id, phone, username, avatar_url, energy, is_banned, bio, last_activity, latitude, longitude FROM users WHERE id = '{safe_user_id}'"
+        )
+        row = cur.fetchone()
+        has_city = False
     
     cur.close()
     conn.close()
@@ -83,22 +95,24 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         time_diff = datetime.utcnow() - last_activity
         is_online = time_diff < timedelta(minutes=5)
     
+    result_data = {
+        'id': row[0],
+        'phone': row[1],
+        'username': row[2],
+        'avatar': row[3] if row[3] else '',
+        'energy': row[4],
+        'is_admin': False,
+        'is_banned': row[5] if row[5] is not None else False,
+        'bio': row[6] if row[6] else '',
+        'status': 'online' if is_online else 'offline',
+        'latitude': float(row[8]) if len(row) > 8 and row[8] is not None else None,
+        'longitude': float(row[9]) if len(row) > 9 and row[9] is not None else None,
+        'city': row[10] if has_city and len(row) > 10 and row[10] else ''
+    }
+    
     return {
         'statusCode': 200,
         'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-        'body': json.dumps({
-            'id': row[0],
-            'phone': row[1],
-            'username': row[2],
-            'avatar': row[3] if row[3] else '',
-            'energy': row[4],
-            'is_admin': False,
-            'is_banned': row[5] if row[5] is not None else False,
-            'bio': row[6] if row[6] else '',
-            'status': 'online' if is_online else 'offline',
-            'latitude': float(row[8]) if len(row) > 8 and row[8] is not None else None,
-            'longitude': float(row[9]) if len(row) > 9 and row[9] is not None else None,
-            'city': row[10] if len(row) > 10 and row[10] else ''
-        }),
+        'body': json.dumps(result_data),
         'isBase64Encoded': False
     }

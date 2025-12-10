@@ -248,17 +248,19 @@ const Index = () => {
       
       if (data.username) {
         const photosData = await api.getProfilePhotos(id.toString());
+        console.log('[LOAD USER] Photos data:', photosData);
         const userAvatar = photosData.photos && photosData.photos.length > 0 
           ? photosData.photos[0].url 
           : `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.username}`;
         
+        console.log('[LOAD USER] Setting avatar to:', userAvatar);
         setUser({
           username: data.username,
           avatar: userAvatar,
           phone: data.phone,
           energy: data.energy,
         });
-        console.log('[LOAD USER] User set successfully');
+        console.log('[LOAD USER] User set successfully with avatar:', userAvatar);
         
         // Проверяем наличие геолокации
         console.log('[GEO] User data:', { latitude: data.latitude, longitude: data.longitude });

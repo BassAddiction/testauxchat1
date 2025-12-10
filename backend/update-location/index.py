@@ -10,6 +10,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
           context with request_id
     Returns: HTTP response with success status
     '''
+    print('[UPDATE-LOCATION v2] Handler called')  # Force redeploy
     method: str = event.get('httpMethod', 'GET')
     
     if method == 'OPTIONS':
@@ -71,12 +72,24 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         safe_user_id = str(user_id).replace("'", "''")
         safe_city = city.replace("'", "''") if city else ''
         
-        # Обновляем координаты и город пользователя
-        cur.execute(f"""
-            UPDATE users 
-            SET latitude = {latitude}, longitude = {longitude}, city = '{safe_city}'
-            WHERE id = '{safe_user_id}'
-        """)
+        # Try to update with city column, fallback if it doesn't exist
+        try:
+            cur.execute(f"""
+                UPDATE users 
+                SET latitude = {latitude}, longitude = {longitude}, city = '{safe_city}'
+                WHERE id = '{safe_user_id}'
+            """)
+            print('[UPDATE-LOCATION] Updated with city')
+        except Exception as e:
+            print(f'[UPDATE-LOCATION] Error with city column: {e}, trying without')
+            # Rollback and try without city
+            conn.rollback()
+            cur.execute(f"""
+                UPDATE users 
+                SET latitude = {latitude}, longitude = {longitude}
+                WHERE id = '{safe_user_id}'
+            """)
+            print('[UPDATE-LOCATION] Updated without city')
         
         conn.commit()
         
