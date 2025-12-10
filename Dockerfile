@@ -9,14 +9,8 @@ WORKDIR /app
 COPY package.json bun.lockb ./
 RUN npm install -g bun && bun install
 
-# Копируем весь frontend код
-COPY src/ ./src/
-COPY public/ ./public/
-COPY index.html vite.config.ts tsconfig.json tsconfig.app.json tsconfig.node.json ./
-COPY tailwind.config.ts postcss.config.js components.json ./
-
-# Копируем func2url.json
-COPY func2url.json ./
+# Копируем весь проект
+COPY . .
 
 # Билдим frontend
 RUN bun run build
@@ -40,7 +34,7 @@ RUN find /app/backend -name "requirements.txt" -exec pip install --no-cache-dir 
 # Устанавливаем FastAPI для HTTP сервера
 RUN pip install --no-cache-dir fastapi uvicorn[standard] psycopg2-binary boto3 python-multipart
 
-# Копируем frontend билд из предыдущего stage
+# ✅ Копируем готовый frontend билд из Stage 1
 COPY --from=frontend-builder /app/dist /usr/share/nginx/html
 
 # Создаем HTTP сервер для backend функций
