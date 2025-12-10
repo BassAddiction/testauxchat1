@@ -89,27 +89,34 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     print(f'Could not create image_url column: {e}')
             
             if has_image_url:
+                # Используем подзапрос: берём последние N сообщений (DESC) и переворачиваем обратно (ASC)
                 query = f"""
-                    SELECT pm.id, pm.sender_id, pm.receiver_id, pm.text, pm.is_read, pm.created_at,
-                           u.username, NULL as avatar_url, pm.voice_url, pm.voice_duration, pm.image_url
-                    FROM private_messages pm
-                    JOIN users u ON u.id = pm.sender_id
-                    WHERE (pm.sender_id = {user_id} AND pm.receiver_id = {other_user_id}) 
-                       OR (pm.sender_id = {other_user_id} AND pm.receiver_id = {user_id})
-                    ORDER BY pm.created_at ASC
-                    LIMIT {limit}
+                    SELECT * FROM (
+                        SELECT pm.id, pm.sender_id, pm.receiver_id, pm.text, pm.is_read, pm.created_at,
+                               u.username, NULL as avatar_url, pm.voice_url, pm.voice_duration, pm.image_url
+                        FROM private_messages pm
+                        JOIN users u ON u.id = pm.sender_id
+                        WHERE (pm.sender_id = {user_id} AND pm.receiver_id = {other_user_id}) 
+                           OR (pm.sender_id = {other_user_id} AND pm.receiver_id = {user_id})
+                        ORDER BY pm.created_at DESC
+                        LIMIT {limit}
+                    ) AS last_messages
+                    ORDER BY created_at ASC
                 """
             else:
                 # Fallback without image_url if column doesn't exist
                 query = f"""
-                    SELECT pm.id, pm.sender_id, pm.receiver_id, pm.text, pm.is_read, pm.created_at,
-                           u.username, NULL as avatar_url, pm.voice_url, pm.voice_duration, NULL as image_url
-                    FROM private_messages pm
-                    JOIN users u ON u.id = pm.sender_id
-                    WHERE (pm.sender_id = {user_id} AND pm.receiver_id = {other_user_id}) 
-                       OR (pm.sender_id = {other_user_id} AND pm.receiver_id = {user_id})
-                    ORDER BY pm.created_at ASC
-                    LIMIT {limit}
+                    SELECT * FROM (
+                        SELECT pm.id, pm.sender_id, pm.receiver_id, pm.text, pm.is_read, pm.created_at,
+                               u.username, NULL as avatar_url, pm.voice_url, pm.voice_duration, NULL as image_url
+                        FROM private_messages pm
+                        JOIN users u ON u.id = pm.sender_id
+                        WHERE (pm.sender_id = {user_id} AND pm.receiver_id = {other_user_id}) 
+                           OR (pm.sender_id = {other_user_id} AND pm.receiver_id = {user_id})
+                        ORDER BY pm.created_at DESC
+                        LIMIT {limit}
+                    ) AS last_messages
+                    ORDER BY created_at ASC
                 """
             print(f'Executing query...')
             cur.execute(query)
