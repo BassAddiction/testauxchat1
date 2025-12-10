@@ -1431,6 +1431,16 @@ const Index = () => {
 
       <main className="flex-1 flex flex-col max-w-3xl mx-auto w-full">
         <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-1 overscroll-contain" style={{ paddingBottom: '120px' }}>
+          {/* Geo radius indicator */}
+          <div className="sticky top-0 z-10 mb-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-500/90 to-pink-500/90 text-white text-xs rounded-full shadow-md backdrop-blur-sm">
+              <Icon name="MapPin" size={14} />
+              <span className="font-medium">
+                {geoRadius === 99999 ? 'Все пользователи' : `Радиус ${geoRadius} км`}
+              </span>
+            </div>
+          </div>
+          
           {displayLimit < messages.length && (
             <div className="text-center pb-2">
               <Button
