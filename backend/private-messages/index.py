@@ -56,6 +56,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         if method == 'GET':
             query_params = event.get('queryStringParameters', {}) or {}
             other_user_id_str = query_params.get('otherUserId')
+            limit_str = query_params.get('limit', '100')
             
             if not other_user_id_str:
                 cur.close()
@@ -68,7 +69,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             other_user_id = int(other_user_id_str)
+            limit = int(limit_str)
             print(f'Other user ID: {other_user_id}')
+            print(f'Limit: {limit}')
             
             # Load messages with text, voice and images
             # Try to check if image_url column exists first
@@ -94,7 +97,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     WHERE (pm.sender_id = {user_id} AND pm.receiver_id = {other_user_id}) 
                        OR (pm.sender_id = {other_user_id} AND pm.receiver_id = {user_id})
                     ORDER BY pm.created_at ASC
-                    LIMIT 100
+                    LIMIT {limit}
                 """
             else:
                 # Fallback without image_url if column doesn't exist
@@ -106,7 +109,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     WHERE (pm.sender_id = {user_id} AND pm.receiver_id = {other_user_id}) 
                        OR (pm.sender_id = {other_user_id} AND pm.receiver_id = {user_id})
                     ORDER BY pm.created_at ASC
-                    LIMIT 100
+                    LIMIT {limit}
                 """
             print(f'Executing query...')
             cur.execute(query)
