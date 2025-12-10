@@ -1,0 +1,16 @@
+{
+  "get-messages": "https://onproduct.pro/api/get-messages",
+  "get-subscriptions": "https://onproduct.pro/api/get-subscriptions",
+  "get-user": "https://onproduct.pro/api/get-user",
+  "login": "https://onproduct.pro/api/login",
+  "payment-webhook": "https://onproduct.pro/api/payment-webhook",
+  "private-messages": "https://onproduct.pro/api/private-messages",
+  "profile-photos": "https://onproduct.pro/api/profile-photos",
+  "register": "https://onproduct.pro/api/register",
+  "reset-password": "https://onproduct.pro/api/reset-password",
+  "seed-test-users": "https://onproduct.pro/api/seed-test-users",
+  "send-message": "https://onproduct.pro/api/send-message",
+  "send-sms": "https://onproduct.pro/api/send-sms",
+  "subscribe": "https://onproduct.pro/api/subscribe",
+  "update-activity": "https://onproduct.pro/api/update-activity"
+}
