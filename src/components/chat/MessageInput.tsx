@@ -198,7 +198,7 @@ export default function MessageInput({
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
@@ -310,7 +310,7 @@ export default function MessageInput({
             <Input
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyDown}
               placeholder="Сообщение"
               className="w-full rounded-full bg-gray-100 border-0 pl-4 pr-4 h-10 focus-visible:ring-0 focus-visible:bg-gray-100"
             />
