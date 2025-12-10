@@ -149,6 +149,8 @@ export default function Chat() {
       const data = await response.json();
       const newMessages = data.messages || [];
       
+      console.log('[CHAT] Loaded messages:', newMessages.length, 'previous:', lastMessageCountRef.current);
+      
       if (lastMessageCountRef.current === 0) {
         lastMessageCountRef.current = newMessages.length;
       } else if (newMessages.length > lastMessageCountRef.current) {
@@ -159,9 +161,10 @@ export default function Chat() {
             description: latestMessage.text.slice(0, 50) + (latestMessage.text.length > 50 ? '...' : '')
           });
         }
-        lastMessageCountRef.current = newMessages.length;
       }
       
+      // Всегда обновляем счётчик и сообщения
+      lastMessageCountRef.current = newMessages.length;
       setMessages(newMessages);
     } catch (error) {
       console.error('Error loading messages:', error);
