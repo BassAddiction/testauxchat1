@@ -68,43 +68,49 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     conn = psycopg2.connect(dsn)
     cur = conn.cursor()
     
-    try:
-        safe_user_id = str(user_id).replace("'", "''")
-        safe_city = city.replace("'", "''") if city else ''
-        
-        # Try to update with city column, fallback if it doesn't exist
-        try:
-            cur.execute(f"""
-                UPDATE users 
-                SET latitude = {latitude}, longitude = {longitude}, city = '{safe_city}'
-                WHERE id = '{safe_user_id}'
-            """)
-            print('[UPDATE-LOCATION] Updated with city')
-        except Exception as e:
-            print(f'[UPDATE-LOCATION] Error with city column: {e}, trying without')
-            # Rollback and try without city
-            conn.rollback()
-            cur.execute(f"""
-                UPDATE users 
-                SET latitude = {latitude}, longitude = {longitude}
-                WHERE id = '{safe_user_id}'
-            """)
-            print('[UPDATE-LOCATION] Updated without city')
-        
-        conn.commit()
-        
-        return {
-            'statusCode': 200,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({
-                'success': True,
-                'latitude': latitude,
-                'longitude': longitude,
-                'city': city
-            }),
-            'isBase64Encoded': False
-        }
+    safe_user_id = str(user_id).replace("'", "''")
+    safe_city = city.replace("'", "''") if city else ''
     
-    finally:
+    # Try to update with city column, fallback if it doesn't exist
+    try:
+        cur.execute(f"""
+            UPDATE users 
+            SET latitude = {latitude}, longitude = {longitude}, city = '{safe_city}'
+            WHERE id = '{safe_user_id}'
+        """)
+        conn.commit()
+        print('[UPDATE-LOCATION] Updated with city')
         cur.close()
         conn.close()
+    except Exception as e:
+        print(f'[UPDATE-LOCATION] Error with city column: {e}, reconnecting for fallback')
+        # Close failed connection and create new one
+        try:
+            cur.close()
+            conn.close()
+        except:
+            pass
+        # Reconnect
+        conn = psycopg2.connect(dsn)
+        cur = conn.cursor()
+        cur.execute(f"""
+            UPDATE users 
+            SET latitude = {latitude}, longitude = {longitude}
+            WHERE id = '{safe_user_id}'
+        """)
+        conn.commit()
+        print('[UPDATE-LOCATION] Updated without city')
+        cur.close()
+        conn.close()
+    
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+        'body': json.dumps({
+            'success': True,
+            'latitude': latitude,
+            'longitude': longitude,
+            'city': city
+        }),
+        'isBase64Encoded': False
+    }

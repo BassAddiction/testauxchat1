@@ -1,0 +1,20 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS request for CORS",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Geocode coordinates to city",
+      "method": "GET",
+      "path": "/?lat=55.7558&lon=37.6173",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "city": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

@@ -67,17 +67,26 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         )
         row = cur.fetchone()
         has_city = True
+        cur.close()
+        conn.close()
     except Exception as e:
-        print(f'[GET-USER] Error with city column, trying without: {e}')
-        cur = conn.cursor()  # Reset cursor
+        print(f'[GET-USER] Error with city column: {e}, reconnecting for fallback')
+        # Close failed connection and create new one
+        try:
+            cur.close()
+            conn.close()
+        except:
+            pass
+        # Reconnect
+        conn = psycopg2.connect(dsn)
+        cur = conn.cursor()
         cur.execute(
             f"SELECT id, phone, username, avatar_url, energy, is_banned, bio, last_activity, latitude, longitude FROM users WHERE id = '{safe_user_id}'"
         )
         row = cur.fetchone()
         has_city = False
-    
-    cur.close()
-    conn.close()
+        cur.close()
+        conn.close()
     
     if not row:
         return {

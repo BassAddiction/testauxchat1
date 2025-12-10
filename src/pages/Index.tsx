@@ -437,11 +437,11 @@ const Index = () => {
         latitude = position.coords.latitude;
         longitude = position.coords.longitude;
         
-        // Определяем город через обратное геокодирование (примерно)
+        // Определяем город через backend API (чтобы избежать CORS)
         try {
-          const geoResponse = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
+          const geoResponse = await fetch(`https://functions.poehali.dev/90e9cacc-48ca-4b42-b817-3a77b67db25c?lat=${latitude}&lon=${longitude}`);
           const geoData = await geoResponse.json();
-          city = geoData.address?.city || geoData.address?.town || geoData.address?.village || '';
+          city = geoData.city || '';
         } catch (e) {
           console.log('Не удалось определить город');
         }
@@ -789,16 +789,15 @@ const Index = () => {
       const latitude = position.coords.latitude;
       const longitude = position.coords.longitude;
       
-      // Определяем город
+      // Определяем город через backend API (чтобы избежать CORS)
       let city = '';
       try {
         const geoResponse = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=ru`
+          `https://functions.poehali.dev/90e9cacc-48ca-4b42-b817-3a77b67db25c?lat=${latitude}&lon=${longitude}`
         );
         const geoData = await geoResponse.json();
-        console.log('[GEO] Nominatim response:', geoData);
-        console.log('[GEO] Address data:', geoData.address);
-        city = geoData.address?.city || geoData.address?.town || geoData.address?.village || geoData.address?.state || '';
+        console.log('[GEO] Geocode response:', geoData);
+        city = geoData.city || '';
         console.log('[GEO] Extracted city:', city);
       } catch (e) {
         console.error('[GEO] City lookup error:', e);
