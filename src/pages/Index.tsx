@@ -596,70 +596,98 @@ const Index = () => {
       return;
     }
 
+    console.log('[PHOTO UPLOAD] Starting upload, file:', file.name, 'size:', file.size);
     setUploadingFile(true);
     setUploadProgress('Подготовка файла...');
     
     try {
       const reader = new FileReader();
+      reader.onerror = () => {
+        console.error('[PHOTO UPLOAD] FileReader error');
+        alert('Ошибка чтения файла');
+        setUploadingFile(false);
+        setUploadProgress('');
+      };
+      
       reader.onloadend = async () => {
-        const base64 = reader.result as string;
-        
-        setUploadProgress('Загрузка на сервер...');
-        const uploadResponse = await fetch('https://functions.poehali.dev/559ff756-6b7f-42fc-8a61-2dac6de68639', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-User-Id': userId.toString()
-          },
-          body: JSON.stringify({ 
-            fileData: base64,
-            fileName: file.name
-          })
-        });
-
-        if (!uploadResponse.ok) {
-          alert('Ошибка загрузки фото');
-          setUploadingFile(false);
-          setUploadProgress('');
-          return;
-        }
-
-        const { fileUrl } = await uploadResponse.json();
-
-        setUploadProgress('Сохранение в галерею...');
-        const addPhotoResponse = await fetch(
-          'https://functions.poehali.dev/6ab5e5ca-f93c-438c-bc46-7eb7a75e2734',
-          {
+        try {
+          const base64 = reader.result as string;
+          console.log('[PHOTO UPLOAD] File read, base64 length:', base64.length);
+          
+          setUploadProgress('Загрузка на сервер...');
+          console.log('[PHOTO UPLOAD] Sending to upload function...');
+          const uploadResponse = await fetch('https://functions.poehali.dev/559ff756-6b7f-42fc-8a61-2dac6de68639', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'X-User-Id': userId.toString()
             },
-            body: JSON.stringify({ photoUrl: fileUrl })
-          }
-        );
+            body: JSON.stringify({ 
+              fileData: base64,
+              fileName: file.name
+            })
+          });
 
-        if (addPhotoResponse.ok) {
-          setUploadProgress('Готово!');
-          setTimeout(async () => {
-            alert('Фото добавлено');
-            await loadProfilePhotos();
-            // Обновляем аватар пользователя первым фото
-            if (user && profilePhotos.length === 0) {
-              setUser({ ...user, avatar: fileUrl });
-            }
+          console.log('[PHOTO UPLOAD] Upload response status:', uploadResponse.status);
+          
+          if (!uploadResponse.ok) {
+            const errorText = await uploadResponse.text();
+            console.error('[PHOTO UPLOAD] Upload failed:', errorText);
+            alert('Ошибка загрузки фото: ' + errorText);
+            setUploadingFile(false);
             setUploadProgress('');
-          }, 500);
-        } else {
-          const error = await addPhotoResponse.json();
-          alert(error.error || 'Ошибка добавления фото');
+            return;
+          }
+
+          const uploadData = await uploadResponse.json();
+          console.log('[PHOTO UPLOAD] Upload success, fileUrl:', uploadData.fileUrl);
+          const { fileUrl } = uploadData;
+
+          setUploadProgress('Сохранение в галерею...');
+          console.log('[PHOTO UPLOAD] Adding photo to gallery...');
+          const addPhotoResponse = await fetch(
+            'https://functions.poehali.dev/6ab5e5ca-f93c-438c-bc46-7eb7a75e2734',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-User-Id': userId.toString()
+              },
+              body: JSON.stringify({ photoUrl: fileUrl })
+            }
+          );
+
+          console.log('[PHOTO UPLOAD] Add photo response status:', addPhotoResponse.status);
+
+          if (addPhotoResponse.ok) {
+            setUploadProgress('Готово!');
+            console.log('[PHOTO UPLOAD] Photo added successfully');
+            setTimeout(async () => {
+              alert('Фото добавлено');
+              await loadProfilePhotos();
+              if (user && profilePhotos.length === 0) {
+                setUser({ ...user, avatar: fileUrl });
+              }
+              setUploadProgress('');
+            }, 500);
+          } else {
+            const error = await addPhotoResponse.json();
+            console.error('[PHOTO UPLOAD] Add photo failed:', error);
+            alert(error.error || 'Ошибка добавления фото');
+            setUploadProgress('');
+          }
+          setUploadingFile(false);
+        } catch (innerError) {
+          console.error('[PHOTO UPLOAD] Error in reader.onloadend:', innerError);
+          alert('Ошибка загрузки фото: ' + (innerError instanceof Error ? innerError.message : String(innerError)));
+          setUploadingFile(false);
           setUploadProgress('');
         }
-        setUploadingFile(false);
       };
       reader.readAsDataURL(file);
     } catch (error) {
-      alert('Ошибка загрузки фото');
+      console.error('[PHOTO UPLOAD] Outer error:', error);
+      alert('Ошибка загрузки фото: ' + (error instanceof Error ? error.message : String(error)));
       setUploadingFile(false);
       setUploadProgress('');
     }
