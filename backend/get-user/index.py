@@ -57,13 +57,22 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     conn = psycopg2.connect(dsn)
     cur = conn.cursor()
     
-    # Use simple query protocol - escape single quotes
-    safe_user_id = str(user_id).replace("'", "''")
+    # Use simple query protocol - user_id is already validated as integer
+    try:
+        # Convert to int to ensure it's safe
+        user_id_int = int(user_id)
+    except (ValueError, TypeError):
+        return {
+            'statusCode': 400,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': 'Invalid user ID'}),
+            'isBase64Encoded': False
+        }
     
     # Try with city column first, fallback if it doesn't exist
     try:
         cur.execute(
-            f"SELECT id, phone, username, avatar_url, energy, is_banned, bio, last_activity, latitude, longitude, city FROM users WHERE id = '{safe_user_id}'"
+            f"SELECT id, phone, username, avatar_url, energy, is_banned, bio, last_activity, latitude, longitude, city FROM users WHERE id = {user_id_int}"
         )
         row = cur.fetchone()
         has_city = True
@@ -81,7 +90,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         conn = psycopg2.connect(dsn)
         cur = conn.cursor()
         cur.execute(
-            f"SELECT id, phone, username, avatar_url, energy, is_banned, bio, last_activity, latitude, longitude FROM users WHERE id = '{safe_user_id}'"
+            f"SELECT id, phone, username, avatar_url, energy, is_banned, bio, last_activity, latitude, longitude FROM users WHERE id = {user_id_int}"
         )
         row = cur.fetchone()
         has_city = False

@@ -68,7 +68,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     conn = psycopg2.connect(dsn)
     cur = conn.cursor()
     
-    safe_user_id = str(user_id).replace("'", "''")
     safe_city = city.replace("'", "''") if city else ''
     
     # Try to update with city column, fallback if it doesn't exist
@@ -76,10 +75,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cur.execute(f"""
             UPDATE users 
             SET latitude = {latitude}, longitude = {longitude}, city = '{safe_city}'
-            WHERE id = '{safe_user_id}'
+            WHERE id = {user_id}
         """)
+        affected = cur.rowcount
         conn.commit()
-        print('[UPDATE-LOCATION] Updated with city')
+        print(f'[UPDATE-LOCATION] Updated with city, rows affected: {affected}')
         cur.close()
         conn.close()
     except Exception as e:
@@ -96,10 +96,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cur.execute(f"""
             UPDATE users 
             SET latitude = {latitude}, longitude = {longitude}
-            WHERE id = '{safe_user_id}'
+            WHERE id = {user_id}
         """)
+        affected = cur.rowcount
         conn.commit()
-        print('[UPDATE-LOCATION] Updated without city')
+        print(f'[UPDATE-LOCATION] Updated without city, rows affected: {affected}')
         cur.close()
         conn.close()
     

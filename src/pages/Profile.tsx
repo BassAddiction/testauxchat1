@@ -13,6 +13,9 @@ interface UserProfile {
   bio: string;
   status: string;
   energy: number;
+  latitude?: number | null;
+  longitude?: number | null;
+  city?: string;
 }
 
 interface Photo {
@@ -452,6 +455,13 @@ export default function Profile() {
 
               {profile.bio && (
                 <p className="text-xs md:text-sm text-muted-foreground mb-2 md:mb-3">{profile.bio}</p>
+              )}
+
+              {profile.city && (
+                <div className="flex items-center gap-1 md:gap-1.5 text-muted-foreground mb-2 md:mb-3">
+                  <Icon name="MapPin" size={14} className="text-purple-600" />
+                  <span className="text-xs md:text-sm">{profile.city}</span>
+                </div>
               )}
 
               {isOwnProfile && (
