@@ -35,15 +35,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     # Parse request
     body_str = event.get('body') or '{}'
+    print(f'[UPLOAD] Body string length: {len(body_str)}')
     body_data = json.loads(body_str) if body_str else {}
+    print(f'[UPLOAD] Body data keys: {list(body_data.keys())}')
+    
     file_base64 = body_data.get('file')
     content_type = body_data.get('contentType', 'image/jpeg')
+    print(f'[UPLOAD] Content type: {content_type}')
+    print(f'[UPLOAD] File base64 length: {len(file_base64) if file_base64 else 0}')
     
     if not file_base64:
         return {
             'statusCode': 400,
             'headers': {'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'No file provided'})
+            'body': json.dumps({'error': 'No file data provided'})
         }
     
     # Decode base64

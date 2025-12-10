@@ -618,18 +618,30 @@ const Index = () => {
           const base64Data = base64.includes(',') ? base64.split(',')[1] : base64;
           console.log('[PHOTO UPLOAD] Clean base64 length:', base64Data.length);
           
+          if (!base64Data || base64Data.length === 0) {
+            console.error('[PHOTO UPLOAD] Empty base64 data');
+            alert('Ошибка: пустой файл');
+            setUploadingFile(false);
+            setUploadProgress('');
+            return;
+          }
+          
+          const requestBody = { 
+            file: base64Data,
+            contentType: file.type
+          };
+          console.log('[PHOTO UPLOAD] Request body keys:', Object.keys(requestBody));
+          console.log('[PHOTO UPLOAD] File type:', file.type);
+          
           setUploadProgress('Загрузка на сервер...');
           console.log('[PHOTO UPLOAD] Sending to upload function...');
-          const uploadResponse = await fetch('https://functions.poehali.dev/559ff756-6b7f-42fc-8a61-2dac6de68639', {
+          const uploadResponse = await fetch('https://functions.poehali.dev/e02155bb-d5d7-4a35-81a4-b089847fecf4', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'X-User-Id': userId.toString()
             },
-            body: JSON.stringify({ 
-              file: base64Data,
-              contentType: file.type
-            })
+            body: JSON.stringify(requestBody)
           });
 
           console.log('[PHOTO UPLOAD] Upload response status:', uploadResponse.status);
