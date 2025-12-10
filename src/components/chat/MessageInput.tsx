@@ -302,7 +302,7 @@ export default function MessageInput({
         </div>
       ) : (
         <div className="flex items-center gap-2">
-          <button className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:bg-accent/50 transition-colors">
+          <button className="w-10 h-10 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors">
             <Icon name="Smile" size={24} />
           </button>
           
@@ -312,7 +312,7 @@ export default function MessageInput({
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Сообщение"
-              className="w-full rounded-full bg-secondary/30 border-0 pl-4 pr-4 h-10 focus-visible:ring-1 focus-visible:ring-blue-500"
+              className="w-full rounded-full bg-gray-100 border-0 pl-4 pr-4 h-10 focus-visible:ring-0 focus-visible:bg-gray-100"
             />
           </div>
 
@@ -325,7 +325,7 @@ export default function MessageInput({
           />
           <button 
             onClick={() => fileInputRef.current?.click()}
-            className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:bg-accent/50 transition-colors"
+            className="w-10 h-10 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors"
           >
             <Icon name="Paperclip" size={22} />
           </button>
@@ -340,7 +340,7 @@ export default function MessageInput({
           ) : (
             <button
               onClick={handleStartRecording}
-              className="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center hover:bg-blue-600 transition-colors active:scale-95"
+              className="w-10 h-10 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors active:scale-95"
             >
               <Icon name="Mic" size={20} />
             </button>

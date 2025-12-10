@@ -43,7 +43,7 @@ export default function MessageList({
   }, [messages]);
 
   return (
-    <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-1 bg-background">
+    <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-2 bg-background">
       {messages.map((message) => {
         const isOwn = String(message.senderId) === String(currentUserId);
         
@@ -51,8 +51,8 @@ export default function MessageList({
           <div key={message.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[75%] md:max-w-md rounded-2xl px-3 py-2 shadow-sm ${
               isOwn 
-                ? 'bg-purple-100 text-gray-900 rounded-br-sm' 
-                : 'bg-card rounded-bl-sm'
+                ? 'bg-blue-500 text-white rounded-br-sm' 
+                : 'bg-gray-100 text-gray-900 rounded-bl-sm'
             }`}>
               {message.imageUrl ? (
                 <div className="space-y-1">
