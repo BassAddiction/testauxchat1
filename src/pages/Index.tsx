@@ -114,9 +114,13 @@ const Index = () => {
   useEffect(() => {
     if (userId) {
       console.log('[GEO RADIUS] Changed to:', geoRadius, 'km');
-      loadMessages();
+      // Небольшая задержка чтобы дать время обновиться состоянию
+      const timer = setTimeout(() => {
+        loadMessages();
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [geoRadius]);
+  }, [geoRadius, userId]);
   const [geoPermissionModalOpen, setGeoPermissionModalOpen] = useState(false);
   const [updatingLocation, setUpdatingLocation] = useState(false);
   const [userLocation, setUserLocation] = useState<{lat: number; lon: number; city: string} | null>(null);
