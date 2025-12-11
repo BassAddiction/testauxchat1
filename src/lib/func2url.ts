@@ -15,10 +15,10 @@ export const FUNCTIONS = {
   "reset-password": "https://onproduct.pro/api/reset-password",
   "login": "https://onproduct.pro/api/login",
   "add-reaction": "https://onproduct.pro/api/add-reaction",
-  "get-user": "https://onproduct.pro/api/get-user",
+  "get-user": "https://functions.yandexcloud.net/d4ev53ggag7ku6bldvpj",
   "create-user": "https://onproduct.pro/api/create-user",
   "admin-users": "https://onproduct.pro/api/admin-users",
-  "get-messages": "https://onproduct.pro/api/get-messages",
+  "get-messages": "https://functions.yandexcloud.net/d4e25ugin6o29hr4ots8",
   "send-message": "https://functions.yandexcloud.net/d4eqjhv1ab66or71eli4",
   "verify-sms": "https://onproduct.pro/api/verify-sms",
   "send-sms": "https://onproduct.pro/api/send-sms"
