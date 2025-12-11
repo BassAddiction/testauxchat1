@@ -1,5 +1,5 @@
 // Universal API Client for auxchat
-const API_BASE = import.meta.env.PROD ? 'https://auxchat.ru' : 'http://localhost:8000';
+const API_BASE = import.meta.env.PROD ? 'https://onproduct.pro' : 'http://localhost:8000';
 
 interface FetchOptions extends RequestInit {
   headers?: Record<string, string>;
