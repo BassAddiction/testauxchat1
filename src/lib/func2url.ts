@@ -7,7 +7,7 @@ export const FUNCTIONS = {
   "subscribe": "https://onproduct.pro/api/subscribe",
   "profile-photos": "https://onproduct.pro/api/profile-photos",
   "get-conversations": "https://onproduct.pro/api/get-conversations",
-  "private-messages": "https://onproduct.pro/api/private-messages",
+  "private-messages": "https://functions.yandexcloud.net/d4es8snba4ua5e0s6kgr",
   "payment-webhook": "https://onproduct.pro/api/payment-webhook",
   "create-payment": "https://onproduct.pro/api/create-payment",
   "add-energy": "https://onproduct.pro/api/add-energy",
