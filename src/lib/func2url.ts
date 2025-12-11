@@ -19,7 +19,7 @@ export const FUNCTIONS = {
   "create-user": "https://onproduct.pro/api/create-user",
   "admin-users": "https://onproduct.pro/api/admin-users",
   "get-messages": "https://onproduct.pro/api/get-messages",
-  "send-message": "https://onproduct.pro/api/send-message",
+  "send-message": "https://functions.yandexcloud.net/d4eqjhv1ab66or71eli4",
   "verify-sms": "https://onproduct.pro/api/verify-sms",
   "send-sms": "https://onproduct.pro/api/send-sms"
 } as const;
