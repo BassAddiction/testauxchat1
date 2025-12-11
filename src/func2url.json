@@ -3,7 +3,7 @@
   "get-subscriptions": "https://onproduct.pro/api/get-subscriptions",
   "get-user": "https://functions.yandexcloud.net/d4ev53ggag7ku6bldvpj",
   "login": "https://onproduct.pro/api/login",
-  "payment-webhook": "https://onproduct.pro/api/payment-webhook",
+  "payment-webhook": "https://functions.yandexcloud.net/d4e235nr619fsgkt1qvi",
   "private-messages": "https://functions.yandexcloud.net/d4es8snba4ua5e0s6kgr",
   "profile-photos": "https://functions.yandexcloud.net/d4emmve89ihd1nnfhcm9",
   "register": "https://onproduct.pro/api/register",

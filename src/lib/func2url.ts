@@ -8,7 +8,7 @@ export const FUNCTIONS = {
   "profile-photos": "https://functions.yandexcloud.net/d4emmve89ihd1nnfhcm9",
   "get-conversations": "https://functions.yandexcloud.net/d4ebuvvtbpqd5f09070g",
   "private-messages": "https://functions.yandexcloud.net/d4es8snba4ua5e0s6kgr",
-  "payment-webhook": "https://onproduct.pro/api/payment-webhook",
+  "payment-webhook": "https://functions.yandexcloud.net/d4e235nr619fsgkt1qvi",
   "create-payment": "https://onproduct.pro/api/create-payment",
   "add-energy": "https://onproduct.pro/api/add-energy",
   "register": "https://onproduct.pro/api/register",
