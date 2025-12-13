@@ -1,25 +1,45 @@
-export const FUNCTIONS = {
-  "upload-photo": "https://onproduct.pro/api/upload-photo",
-  "generate-upload-url": "https://onproduct.pro/api/generate-upload-url",
-  "update-activity": "https://functions.yandexcloud.net/d4es73t1cfkmee0kd724",
-  "blacklist": "https://onproduct.pro/api/blacklist",
-  "get-subscriptions": "https://onproduct.pro/api/get-subscriptions",
-  "subscribe": "https://onproduct.pro/api/subscribe",
-  "profile-photos": "https://functions.yandexcloud.net/d4emmve89ihd1nnfhcm9",
-  "get-conversations": "https://functions.yandexcloud.net/d4ebuvvtbpqd5f09070g",
-  "private-messages": "https://functions.yandexcloud.net/d4es8snba4ua5e0s6kgr",
-  "payment-webhook": "https://functions.yandexcloud.net/d4e235nr619fsgkt1qvi",
-  "create-payment": "https://onproduct.pro/api/create-payment",
-  "add-energy": "https://onproduct.pro/api/add-energy",
-  "register": "https://onproduct.pro/api/register",
-  "reset-password": "https://onproduct.pro/api/reset-password",
-  "login": "https://onproduct.pro/api/login",
-  "add-reaction": "https://onproduct.pro/api/add-reaction",
-  "get-user": "https://functions.yandexcloud.net/d4ev53ggag7ku6bldvpj",
-  "create-user": "https://onproduct.pro/api/create-user",
-  "admin-users": "https://onproduct.pro/api/admin-users",
-  "get-messages": "https://functions.yandexcloud.net/d4e25ugin6o29hr4ots8",
-  "send-message": "https://functions.yandexcloud.net/d4eqjhv1ab66or71eli4",
-  "verify-sms": "https://onproduct.pro/api/verify-sms",
-  "send-sms": "https://onproduct.pro/api/send-sms"
-} as const;
+// API Gateway Configuration - твой собственный сервер
+const API_GATEWAY = 'https://onproduct.pro/api';
+
+// Function names that are proxied through API Gateway
+const FUNCTION_NAMES = [
+  'add-energy',
+  'create-payment',
+  'payment-webhook',
+  'get-messages',
+  'login',
+  'get-subscriptions',
+  'get-conversations',
+  'create-user',
+  'verify-sms',
+  'reset-password',
+  'add-reaction',
+  'profile-photos',
+  'blacklist',
+  'send-sms',
+  'send-message',
+  'register',
+  'subscribe',
+  'update-activity',
+  'private-messages',
+  'admin-users',
+  'get-user',
+  'geocode',
+  'update-location',
+  'upload-photo',
+  'generate-upload-url',
+  'generate-presigned-url',
+  'upload-profile-photo',
+  'upload-photo-http',
+  'upload-photo-swift',
+  'seed-test-users',
+];
+
+// Generate FUNCTIONS object with API Gateway URLs
+export const FUNCTIONS = FUNCTION_NAMES.reduce((acc, name) => {
+  acc[name] = `${API_GATEWAY}/${name}`;
+  return acc;
+}, {} as Record<string, string>);
+
+console.log('[FUNC2URL] Generated FUNCTIONS:', FUNCTIONS);
+console.log('[FUNC2URL] API_GATEWAY =', API_GATEWAY);

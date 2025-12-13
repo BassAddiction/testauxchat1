@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Icon from '@/components/ui/icon';
+import { FUNCTIONS } from '@/lib/func2url';
 
 interface SubscribedUser {
   id: number;
@@ -28,8 +29,9 @@ export default function Subscriptions() {
 
   const loadSubscriptions = async () => {
     try {
+      // FUNCTION: get-subscriptions - Получение ID пользователей, на которых подписан
       const response = await fetch(
-        'https://functions.poehali.dev/ac3ea823-b6ec-4987-9602-18e412db6458',
+        FUNCTIONS["get-subscriptions"],
         {
           headers: { 'X-User-Id': currentUserId || '0' }
         }
@@ -38,13 +40,15 @@ export default function Subscriptions() {
       const userIds = data.subscribedUserIds || [];
       
       const usersPromises = userIds.map(async (id: number) => {
+        // FUNCTION: get-user - Получение данных пользователя
         const userResponse = await fetch(
-          `https://functions.poehali.dev/518f730f-1a8e-45ad-b0ed-e9a66c5a3784?user_id=${id}`
+          `${FUNCTIONS["get-user"]}?user_id=${id}`
         );
         const userData = await userResponse.json();
         
+        // FUNCTION: profile-photos - Получение фотографий для аватара
         const photosResponse = await fetch(
-          `https://functions.poehali.dev/6ab5e5ca-f93c-438c-bc46-7eb7a75e2734?userId=${id}`,
+          `${FUNCTIONS["profile-photos"]}?userId=${id}`,
           {
             headers: { 'X-User-Id': currentUserId || '0' }
           }
@@ -72,8 +76,9 @@ export default function Subscriptions() {
 
   const handleUnsubscribe = async (userId: number) => {
     try {
+      // FUNCTION: subscribe - Отписка от пользователя (DELETE)
       const response = await fetch(
-        `https://functions.poehali.dev/332c7a6c-5c6e-4f84-85de-81c8fd6ab8d5?targetUserId=${userId}`,
+        `${FUNCTIONS["subscribe"]}?targetUserId=${userId}`,
         {
           method: 'DELETE',
           headers: { 'X-User-Id': currentUserId || '0' }

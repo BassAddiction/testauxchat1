@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import ChatHeader from '@/components/chat/ChatHeader';
 import MessageList from '@/components/chat/MessageList';
 import MessageInput from '@/components/chat/MessageInput';
+import { FUNCTIONS } from '@/lib/func2url';
 
 interface Message {
   id: number;
@@ -47,7 +48,8 @@ export default function Chat() {
 
   const updateActivity = async () => {
     try {
-      await fetch('https://functions.poehali.dev/a70b420b-cb23-4948-9a56-b8cefc96f976', {
+      // FUNCTION: update-activity - Обновление времени последней активности
+      await fetch(FUNCTIONS["update-activity"], {
         method: 'POST',
         headers: { 'X-User-Id': currentUserId || '0' }
       });
@@ -74,13 +76,15 @@ export default function Chat() {
 
   const loadProfile = async () => {
     try {
+      // FUNCTION: get-user - Получение данных профиля пользователя
       const response = await fetch(
-        `https://functions.poehali.dev/518f730f-1a8e-45ad-b0ed-e9a66c5a3784?user_id=${userId}`
+        `${FUNCTIONS["get-user"]}?user_id=${userId}`
       );
       const data = await response.json();
       
+      // FUNCTION: profile-photos - Получение фотографий пользователя
       const photosResponse = await fetch(
-        `https://functions.poehali.dev/6ab5e5ca-f93c-438c-bc46-7eb7a75e2734?userId=${userId}`,
+        `${FUNCTIONS["profile-photos"]}?userId=${userId}`,
         { headers: { 'X-User-Id': currentUserId || '0' } }
       );
       const photosData = await photosResponse.json();
@@ -97,12 +101,12 @@ export default function Chat() {
   const loadCurrentUserProfile = async () => {
     try {
       const response = await fetch(
-        `https://functions.poehali.dev/518f730f-1a8e-45ad-b0ed-e9a66c5a3784?user_id=${currentUserId}`
+        `${FUNCTIONS["get-user"]}?user_id=${currentUserId}`
       );
       const data = await response.json();
       
       const photosResponse = await fetch(
-        `https://functions.poehali.dev/6ab5e5ca-f93c-438c-bc46-7eb7a75e2734?userId=${currentUserId}`,
+        `${FUNCTIONS["profile-photos"]}?userId=${currentUserId}`,
         { headers: { 'X-User-Id': currentUserId || '0' } }
       );
       const photosData = await photosResponse.json();
@@ -142,8 +146,9 @@ export default function Chat() {
   const loadMessages = async (customLimit?: number, isLoadingMore = false) => {
     try {
       const limit = customLimit || messageLimit;
+      // FUNCTION: private-messages - Получение истории личных сообщений с пользователем (GET)
       const response = await fetch(
-        `https://functions.poehali.dev/0222e582-5c06-4780-85fa-c9145e5bba14?otherUserId=${userId}&limit=${limit}`,
+        `${FUNCTIONS["private-messages"]}?otherUserId=${userId}&limit=${limit}`,
         {
           headers: {
             'X-User-Id': currentUserId || '0'
@@ -191,8 +196,9 @@ export default function Chat() {
   const checkBlockStatus = async () => {
     setCheckingBlock(true);
     try {
+      // FUNCTION: blacklist - Проверка статуса блокировки пользователя (GET)
       const response = await fetch(
-        `https://functions.poehali.dev/7d7db6d4-88e3-4f83-8ad5-9fc30ccfd5bf?targetUserId=${userId}`,
+        `${FUNCTIONS["blacklist"]}?targetUserId=${userId}`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -216,8 +222,9 @@ export default function Chat() {
     setCheckingBlock(true);
     try {
       if (isBlocked) {
+        // FUNCTION: blacklist - Разблокировка пользователя (DELETE)
         const response = await fetch(
-          `https://functions.poehali.dev/7d7db6d4-88e3-4f83-8ad5-9fc30ccfd5bf?targetUserId=${userId}`,
+          `${FUNCTIONS["blacklist"]}?targetUserId=${userId}`,
           {
             method: 'DELETE',
             headers: {
@@ -235,8 +242,9 @@ export default function Chat() {
           toast.error('Не удалось разблокировать пользователя');
         }
       } else {
+        // FUNCTION: blacklist - Блокировка пользователя (POST)
         const response = await fetch(
-          'https://functions.poehali.dev/7d7db6d4-88e3-4f83-8ad5-9fc30ccfd5bf',
+          FUNCTIONS["blacklist"],
           {
             method: 'POST',
             headers: {
