@@ -1,0 +1,17 @@
+{
+  "tests": [
+    {
+      "name": "Upload profile photo",
+      "method": "POST",
+      "body": {
+        "fileData": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+        "contentType": "image/png"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "fileUrl": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

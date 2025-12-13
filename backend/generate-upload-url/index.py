@@ -4,6 +4,8 @@ Args: event with httpMethod, query params (filename, contentType)
 Returns: HTTP response with pre-signed upload URL
 '''
 
+# Привет Серый это я Юра с поехали
+
 import json
 import os
 import boto3
@@ -11,7 +13,21 @@ from botocore.config import Config
 from typing import Dict, Any
 from datetime import datetime
 
-def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+def handler(event, context):
+    print(f'[DEBUG] Raw event type: {type(event)}')
+    print(f'[DEBUG] Raw event: {event}')
+    
+    if isinstance(event, str):
+        event = json.loads(event)
+    
+    if not isinstance(event, dict):
+        return {
+            'statusCode': 500,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': f'Invalid event type: {type(event)}'}),
+            'isBase64Encoded': False
+        }
+    
     method: str = event.get('httpMethod', 'GET')
     
     if method == 'OPTIONS':
@@ -113,11 +129,11 @@ def handle_upload(event: Dict[str, Any]) -> Dict[str, Any]:
     import base64
     
     try:
-        print('[DEBUG] Starting file upload via Swift API')
-        s3_access_key = os.environ.get('TIMEWEB_SWIFT_ACCESS_KEY')
-        s3_secret_key = os.environ.get('TIMEWEB_SWIFT_SECRET_KEY')
+        print('[DEBUG] Starting file upload via S3 API')
+        s3_access_key = os.environ.get('TIMEWEB_S3_ACCESS_KEY')
+        s3_secret_key = os.environ.get('TIMEWEB_S3_SECRET_KEY')
         s3_bucket = os.environ.get('TIMEWEB_S3_BUCKET_NAME')
-        s3_endpoint = 'https://swift.twcstorage.ru'
+        s3_endpoint = 'https://s3.twcstorage.ru'
         s3_region = 'ru-1'
         
         print(f'[DEBUG] S3 config: endpoint={s3_endpoint}, bucket={s3_bucket}, region={s3_region}')
@@ -134,17 +150,24 @@ def handle_upload(event: Dict[str, Any]) -> Dict[str, Any]:
         # Parse JSON body with base64 data
         print('[DEBUG] Parsing request body')
         body_str = event.get('body', '{}')
+        print(f'[DEBUG] body_str type: {type(body_str)}, length: {len(body_str) if body_str else 0}')
+        print(f'[DEBUG] body_str first 200 chars: {body_str[:200] if body_str else "EMPTY"}')
+        
         body_data = json.loads(body_str)
+        print(f'[DEBUG] body_data keys: {list(body_data.keys())}')
+        
         file_base64 = body_data.get('fileData', body_data.get('audioData', ''))
         file_name = body_data.get('fileName', '')
         content_type = body_data.get('contentType', 'image/jpeg')
         
+        print(f'[DEBUG] Extracted: fileName={file_name}, contentType={content_type}, fileData_length={len(file_base64) if file_base64 else 0}')
+        
         if not file_base64:
-            print('[ERROR] No file data in request')
+            print('[ERROR] No file data in request - body_data was:', body_data)
             return {
                 'statusCode': 400,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'No file data provided'}),
+                'body': json.dumps({'error': 'No file data provided', 'received_keys': list(body_data.keys())}),
                 'isBase64Encoded': False
             }
         
@@ -165,7 +188,7 @@ def handle_upload(event: Dict[str, Any]) -> Dict[str, Any]:
         
         print(f'[DEBUG] Generated filename: {filename}')
         
-        # Upload to S3 with increased timeouts for Swift
+        # Upload to S3 with timeouts
         print('[DEBUG] Creating S3 client')
         from botocore.config import Config as BotoConfig
         s3_client = boto3.client(
@@ -176,10 +199,9 @@ def handle_upload(event: Dict[str, Any]) -> Dict[str, Any]:
             region_name=s3_region,
             config=BotoConfig(
                 signature_version='s3v4',
-                connect_timeout=10,
-                read_timeout=60,
-                retries={'max_attempts': 3, 'mode': 'adaptive'},
-                max_pool_connections=10
+                connect_timeout=5,
+                read_timeout=20,
+                retries={'max_attempts': 2}
             )
         )
         

@@ -4,15 +4,48 @@
       "name": "OPTIONS request for CORS",
       "method": "OPTIONS",
       "path": "/",
-      "expectedStatus": 200
+      "expectedStatus": 204
     },
     {
-      "name": "Create payment",
+      "name": "Create payment with minimum amount (SBP)",
       "method": "POST",
       "path": "/",
       "body": {
         "user_id": 1,
-        "amount": 50
+        "amount": 500,
+        "payment_method": "sbp"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "payment_url": "string",
+        "payment_id": "string"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Create payment with SberPay",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "user_id": 1,
+        "amount": 1000,
+        "payment_method": "sberPay"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "payment_url": "string",
+        "payment_id": "string"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Create payment with T-Pay",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "user_id": 1,
+        "amount": 10000,
+        "payment_method": "tPay"
       },
       "expectedStatus": 200,
       "expectedBody": {

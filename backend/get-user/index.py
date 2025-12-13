@@ -10,7 +10,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
           context with request_id
     Returns: HTTP response with user data including latitude, longitude, city
     '''
-    print('[GET-USER v2] Handler called')  # Force redeploy
+    print('[GET-USER v3] Handler called with city field')  # Force redeploy
     method: str = event.get('httpMethod', 'GET')
     
     if method == 'OPTIONS':
@@ -127,6 +127,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         'longitude': float(row[9]) if len(row) > 9 and row[9] is not None else None,
         'city': row[10] if has_city and len(row) > 10 and row[10] else ''
     }
+    
+    print(f'[GET-USER] User data: has_city={has_city}, row_len={len(row)}, city_value={row[10] if has_city and len(row) > 10 else "NO_CITY"}')
     
     return {
         'statusCode': 200,

@@ -10,7 +10,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
           context with request_id
     Returns: HTTP response with success status
     '''
-    print('[UPDATE-LOCATION v2] Handler called')  # Force redeploy
+    print('[UPDATE-LOCATION v3] Handler called - deployed to poehali.dev')  # Force redeploy
     method: str = event.get('httpMethod', 'GET')
     
     if method == 'OPTIONS':

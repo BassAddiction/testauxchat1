@@ -1,0 +1,22 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS request returns CORS headers",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "GET returns presigned URL",
+      "method": "GET",
+      "path": "/?contentType=image/jpeg",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "uploadUrl": "string",
+        "publicUrl": "string",
+        "fileUrl": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
